@@ -133,6 +133,7 @@ services.fwupd.enable = true;
     telegram-desktop
     (python3.withPackages (ps: [ ps.websockets ps.pyyaml ]))
     jq
+    github-desktop
   ];
 
 programs.nix-ld.enable = true;
