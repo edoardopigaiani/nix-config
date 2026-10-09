@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Format the tree with `nix fmt` before each commit, then re-stage the files
+# that were already staged so the commit contains their formatted version.
+# Enable once per clone with: git config core.hooksPath hooks
+#
+# Caveat: a file with only some hunks staged gets staged in full.
+
+set -euo pipefail
+
+cd "$(git rev-parse --show-toplevel)"
+
+staged=$(git diff --cached --name-only --diff-filter=ACM)
+nix fmt --no-warn-dirty
+echo "$staged" | xargs -r git add

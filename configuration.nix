@@ -5,33 +5,63 @@
 { config, pkgs, ... }:
 
 {
-  imports =
-    [ # Include the results of the hardware scan.
-      ./hardware-configuration.nix
-      ./terminal.nix
-      ./nix-builds.nix
-    ];
+  imports = [
+    # Include the results of the hardware scan.
+    ./hardware-configuration.nix
+    ./terminal.nix
+    ./nix-builds.nix
+  ];
 
-boot.initrd.luks.devices."luks-8187315b-979b-4665-a691-f00ec33b0965".allowDiscards = true;
-boot.initrd.luks.devices."luks-d0394890-6673-4b1a-9c18-5c910f13aa1c".allowDiscards = true;
-  
-# Compressed swap in RAM
-zramSwap.enable = true;
+  boot.initrd.luks.devices."luks-8187315b-979b-4665-a691-f00ec33b0965".allowDiscards = true;
+  boot.initrd.luks.devices."luks-d0394890-6673-4b1a-9c18-5c910f13aa1c".allowDiscards = true;
 
-# Automatic cleanup of old generations
-nix.gc = {
-  automatic = true;
-  dates = "weekly";
-  options = "--delete-older-than 14d";
-};
-nix.settings.auto-optimise-store = true;
-nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  # Compressed swap in RAM
+  zramSwap.enable = true;
 
-# Limit boot menu entries (prevents the EFI partition from filling up)
-boot.loader.systemd-boot.configurationLimit = 10;
+  # nh: front-end for nixos-rebuild (`nh os switch`) that shows a package diff
+  # before activating. Its flake path lets it run from any directory, and it
+  # picks nixosConfigurations.<hostname> by itself.
+  programs.nh = {
+    enable = true;
+    flake = "/home/edo/Projects/nix-config";
 
-# Firmware updates
-services.fwupd.enable = true;
+    # Automatic cleanup of old generations; replaces nix.gc, which must stay off
+    # (the nh module warns when both are enabled). Unlike nix.gc it always keeps
+    # the last 5 generations, even if they are older than 14 days.
+    clean = {
+      enable = true;
+      dates = "weekly";
+      extraArgs = "--keep-since 14d --keep 5";
+    };
+  };
+  nix.settings.auto-optimise-store = true;
+  nix.settings.experimental-features = [
+    "nix-command"
+    "flakes"
+  ];
+
+  # Limit boot menu entries (prevents the EFI partition from filling up)
+  boot.loader.systemd-boot.configurationLimit = 10;
+
+  # Graphical boot: Plymouth shows the firmware logo and asks for the LUKS
+  # passphrase graphically. This needs the systemd initrd, which is the default.
+  # The settings below silence the kernel and systemd messages that would
+  # otherwise print over the splash; errors (log level <= 3) still show.
+  boot.plymouth.enable = true;
+  boot.consoleLogLevel = 3;
+  boot.initrd.verbose = false;
+  boot.kernelParams = [
+    "quiet"
+    "udev.log_level=3"
+    "rd.systemd.show_status=auto"
+  ];
+
+  # Give up on a service that does not stop after 10s instead of the default
+  # 90s, so a hung unit cannot stall shutdown or reboot for a minute and a half.
+  systemd.settings.Manager.DefaultTimeoutStopSec = "10s";
+
+  # Firmware updates
+  services.fwupd.enable = true;
 
   # Use the systemd-boot EFI boot loader.
   boot.loader.systemd-boot.enable = true;
@@ -40,7 +70,8 @@ services.fwupd.enable = true;
   # Use latest kernel.
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
-  boot.initrd.luks.devices."luks-d0394890-6673-4b1a-9c18-5c910f13aa1c".device = "/dev/disk/by-uuid/d0394890-6673-4b1a-9c18-5c910f13aa1c";
+  boot.initrd.luks.devices."luks-d0394890-6673-4b1a-9c18-5c910f13aa1c".device =
+    "/dev/disk/by-uuid/d0394890-6673-4b1a-9c18-5c910f13aa1c";
   networking.hostName = "x395"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
@@ -104,9 +135,12 @@ services.fwupd.enable = true;
   users.users."edo" = {
     isNormalUser = true;
     description = "Edo";
-    extraGroups = [ "networkmanager" "wheel" ];
+    extraGroups = [
+      "networkmanager"
+      "wheel"
+    ];
     packages = with pkgs; [
-    #  thunderbird
+      #  thunderbird
     ];
   };
 
@@ -125,11 +159,14 @@ services.fwupd.enable = true;
     cryptomator
     vlc
     telegram-desktop
-    (python3.withPackages (ps: [ ps.websockets ps.pyyaml ]))
+    (python3.withPackages (ps: [
+      ps.websockets
+      ps.pyyaml
+    ]))
     github-desktop
   ];
 
-programs.nix-ld.enable = true;
+  programs.nix-ld.enable = true;
 
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.

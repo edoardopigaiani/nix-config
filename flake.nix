@@ -15,5 +15,9 @@
         { system.configurationRevision = self.rev or self.dirtyRev or null; }
       ];
     };
+
+    # `nix fmt` formats every .nix file in the repository with nixfmt.
+    # hooks/pre-commit runs it on each commit.
+    formatter.x86_64-linux = nixpkgs.legacyPackages.x86_64-linux.nixfmt-tree;
   };
 }
