@@ -151,6 +151,13 @@
 
   # ---------------------------------------------------------------- packages
   environment.systemPackages = with pkgs; [
+    alacritty
+    micro
+    wget
+    git
+    gh # GitHub CLI; ships its own fish completions
+    jq
+    weechat
     fortune # fish greeting
     cowsay # fish greeting
     libnotify # notify-send, used by weechat/python/notify_send.py

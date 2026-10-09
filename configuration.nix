@@ -119,12 +119,6 @@ services.fwupd.enable = true;
   # List packages installed in system profile.
   # You can use https://search.nixos.org/ to find more packages (and options).
   environment.systemPackages = with pkgs; [
-    micro # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
-    wget
-    openssh
-    git
-    weechat
-    alacritty
     vscode
     claude-code
     gnome-tweaks
@@ -132,9 +126,7 @@ services.fwupd.enable = true;
     vlc
     telegram-desktop
     (python3.withPackages (ps: [ ps.websockets ps.pyyaml ]))
-    jq
     github-desktop
-    gh-dash
   ];
 
 programs.nix-ld.enable = true;
