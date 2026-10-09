@@ -134,6 +134,7 @@ services.fwupd.enable = true;
     (python3.withPackages (ps: [ ps.websockets ps.pyyaml ]))
     jq
     github-desktop
+    gh-dash
   ];
 
 programs.nix-ld.enable = true;
