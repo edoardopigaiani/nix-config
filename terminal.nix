@@ -142,8 +142,7 @@
   # The terminal font belongs here rather than in environment.systemPackages:
   # fonts.packages is the option that registers a font with fontconfig, while
   # systemPackages only happened to work because NixOS also scans the system
-  # profile. Remove terminus_font_ttf and terminus_font from systemPackages in
-  # configuration.nix so they are declared in exactly one place.
+  # profile.
   fonts.packages = with pkgs; [
     terminus_font_ttf # "Terminus (TTF)", the Alacritty font
     terminus_font # Terminus bitmap (PCF) variants
