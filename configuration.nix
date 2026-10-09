@@ -41,7 +41,7 @@ services.fwupd.enable = true;
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
   boot.initrd.luks.devices."luks-d0394890-6673-4b1a-9c18-5c910f13aa1c".device = "/dev/disk/by-uuid/d0394890-6673-4b1a-9c18-5c910f13aa1c";
-  networking.hostName = "nixos"; # Define your hostname.
+  networking.hostName = "x395"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
   # Configure network proxy if necessary
