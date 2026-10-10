@@ -88,8 +88,17 @@
     # Opens UDP 41641 so peers can connect directly instead of going through
     # a DERP relay.
     openFirewall = true;
-    # Lets edo run `tailscale up`/`status`/`down` without sudo.
-    extraSetFlags = [ "--operator=edo" ];
+    extraSetFlags = [
+      # Lets edo run `tailscale up`/`status`/`down` without sudo.
+      "--operator=edo"
+      # Blocks every incoming connection from the tailnet: this laptop only
+      # connects out to the homelab, so if another tailnet device is
+      # compromised it cannot reach this one. Outgoing traffic is unaffected;
+      # receiving files with Taildrop stops working.
+      # `tailscale set` persists in tailscaled's state, so removing this line
+      # is not enough to undo it: run `tailscale set --shields-up=false`.
+      "--shields-up"
+    ];
   };
 
   # Set your time zone.
