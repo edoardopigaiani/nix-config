@@ -82,6 +82,16 @@
   # Enable networking
   networking.networkmanager.enable = true;
 
+  # Tailscale: the only way into the homelab from outside the house.
+  services.tailscale = {
+    enable = true;
+    # Opens UDP 41641 so peers can connect directly instead of going through
+    # a DERP relay.
+    openFirewall = true;
+    # Lets edo run `tailscale up`/`status`/`down` without sudo.
+    extraSetFlags = [ "--operator=edo" ];
+  };
+
   # Set your time zone.
   time.timeZone = "Europe/Rome";
 
