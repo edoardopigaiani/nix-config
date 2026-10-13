@@ -138,6 +138,20 @@
   # ~/.config/alacritty/alacritty.toml therefore still takes precedence.
   environment.etc."xdg/alacritty/alacritty.toml".source = ./alacritty.toml;
 
+  # ---------------------------------------------------------------- micro
+  # micro only reads user colorschemes from ~/.config/micro/colorschemes, so the
+  # Alacritty-matching scheme is linked there. Selecting it is left to micro
+  # (`set colorscheme darkblue`), which keeps the choice in its own mutable
+  # settings.json.
+  systemd.tmpfiles.rules =
+    let
+      dir = "${config.users.users.edo.home}/.config/micro/colorschemes";
+    in
+    [
+      "d ${dir} 0755 edo users -"
+      "L+ ${dir}/darkblue.micro - - - - ${./darkblue.micro}"
+    ];
+
   # ---------------------------------------------------------------- fonts
   # The terminal font belongs here rather than in environment.systemPackages:
   # fonts.packages is the option that registers a font with fontconfig, while

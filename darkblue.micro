@@ -1,0 +1,55 @@
+# Tomorrow Night, the palette of alacritty.toml. Colours are ANSI names so the
+# terminal draws alacritty's exact hex values: no MICRO_TRUECOLOR needed, and
+# it keeps working inside tmux. Bold only on bright* colours: alacritty has
+# draw_bold_text_with_bright_colors = true and would brighten a normal one.
+# 235/241/246 are xterm-256 greys standing in for Tomorrow Night's line
+# highlight and comment greys, which are not in the 16-colour palette.
+
+color-link default "default,default"
+color-link comment "246"
+color-link identifier "brightblue"
+color-link identifier.var "brightred"
+color-link constant "yellow"
+color-link constant.string "brightgreen"
+color-link constant.specialChar "brightcyan"
+color-link statement "brightmagenta"
+color-link symbol "brightcyan"
+color-link symbol.brackets "default"
+color-link symbol.tag "brightred"
+color-link preproc "brightmagenta"
+color-link preproc.shebang "246"
+color-link type "brightyellow"
+color-link type.keyword "brightmagenta"
+color-link special "brightcyan"
+color-link underlined "underline brightblue"
+color-link error "bold brightred"
+color-link todo "bold brightyellow"
+color-link ignore "default"
+
+color-link selection "default,brightblack"
+color-link cursor-line "235"
+color-link color-column "235"
+color-link hlsearch "black,brightyellow"
+color-link match-brace "black,brightcyan"
+color-link tab-error ",red"
+color-link trailingws ",red"
+
+color-link line-number "241"
+color-link current-line-number "brightyellow"
+color-link indent-char "brightblack"
+color-link gutter-info "brightblue"
+color-link gutter-error "brightred"
+color-link gutter-warning "brightyellow"
+color-link diff-added "brightgreen"
+color-link diff-modified "brightyellow"
+color-link diff-deleted "brightred"
+
+color-link statusline "default,brightblack"
+color-link statusline.inactive "246,235"
+color-link statusline.suggestions "default,brightblack"
+color-link tabbar "246,235"
+color-link tabbar.active "default,brightblack"
+color-link divider "brightblack"
+color-link scrollbar "brightblack"
+color-link message "default"
+color-link error-message "brightred"
