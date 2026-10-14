@@ -183,6 +183,7 @@
       ps.pyyaml
     ]))
     github-desktop
+    localsend
   ];
 
   programs.nix-ld.enable = true;
