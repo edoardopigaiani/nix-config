@@ -123,6 +123,16 @@
   services.displayManager.gdm.enable = true;
   services.desktopManager.gnome.enable = true;
 
+  # The X395 trackpoint is an Elantech device, so hardware.trackpoint's sysfs
+  # knobs don't exist for it; set the speed through GNOME instead.
+  programs.dconf.profiles.user.databases = [
+    {
+      settings."org/gnome/desktop/peripherals/pointingstick" = {
+        speed = 1.0; # -1.0 .. 1.0 (default 0.0)
+      };
+    }
+  ];
+
   # Configure keymap in X11
   services.xserver.xkb = {
     layout = "it";
@@ -184,6 +194,7 @@
     ]))
     github-desktop
     localsend
+    spotify
   ];
 
   programs.nix-ld.enable = true;
