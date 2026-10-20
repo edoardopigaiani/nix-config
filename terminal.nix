@@ -162,7 +162,9 @@
   # systemPackages only happened to work because NixOS also scans the system
   # profile.
   fonts.packages = with pkgs; [
-    terminus_font_ttf # "Terminus (TTF)", the Alacritty font
+    jetbrains-mono # "JetBrains Mono", the Alacritty font
+    cozette # "CozetteVector", pixel font, sharp only at 13px multiples
+    terminus_font_ttf # "Terminus (TTF)", the original Alacritty font
     terminus_font # Terminus bitmap (PCF) variants
   ];
 
