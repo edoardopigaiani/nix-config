@@ -86,6 +86,10 @@
       # Enable mouse mode (tmux 2.1 and above)
       set -g mouse on
 
+      # Pass terminal focus in/out events to programs in the panes
+      # (requested by Claude Code)
+      set -g focus-events on
+
       # don't rename windows automatically
       set-option -g allow-rename off
 
