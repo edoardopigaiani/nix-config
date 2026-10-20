@@ -8,6 +8,22 @@
 
 { config, pkgs, ... }:
 
+let
+  # FreeType leaves stem darkening off for CFF fonts such as JetBrains Mono;
+  # turning it on thickens strokes the way macOS does. It is set on Alacritty
+  # alone so the rest of GNOME keeps its rendering. symlinkJoin wraps the
+  # cached binary instead of rebuilding it, and the desktop entry's
+  # Exec=alacritty resolves to the wrapper through PATH.
+  alacrittyWrapped = pkgs.symlinkJoin {
+    name = "alacritty-${pkgs.alacritty.version}";
+    paths = [ pkgs.alacritty ];
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    postBuild = ''
+      wrapProgram $out/bin/alacritty \
+        --set FREETYPE_PROPERTIES "cff:no-stem-darkening=0"
+    '';
+  };
+in
 {
   # ---------------------------------------------------------------- fish
   programs.fish = {
@@ -170,7 +186,7 @@
 
   # ---------------------------------------------------------------- packages
   environment.systemPackages = with pkgs; [
-    alacritty
+    alacrittyWrapped
     micro
     wget
     git
