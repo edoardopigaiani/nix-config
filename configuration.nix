@@ -199,6 +199,11 @@
 
   programs.nix-ld.enable = true;
 
+  # Steam must come from this module, not environment.systemPackages: it is what
+  # enables hardware.graphics.enable32Bit, without which the 32-bit client dies
+  # at startup with "glXChooseVisual failed".
+  programs.steam.enable = true;
+
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
   # programs.mtr.enable = true;
