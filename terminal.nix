@@ -102,6 +102,21 @@ in
       # Enable mouse mode (tmux 2.1 and above)
       set -g mouse on
 
+      # Send every copy-mode selection to the Wayland clipboard, so text picked
+      # with the mouse can be pasted into GUI apps with Ctrl+V.
+      #
+      # One option covers all of it: tmux's default copy bindings (drag release,
+      # double-click word, triple-click line, C-w, M-w) all call
+      # copy-pipe-and-cancel with no argument, and that falls back to
+      # copy-command. Without it they relied solely on set-clipboard, which
+      # emits OSC 52 and needs the window to hold the keyboard focus.
+      #
+      # The store path is used instead of a bare `wl-copy` because the command
+      # runs through /bin/sh from the tmux server, which does not necessarily
+      # have the user's PATH. WAYLAND_DISPLAY does reach it: the server has it
+      # and update-environment refreshes it on re-attach.
+      set -g copy-command '${pkgs.wl-clipboard}/bin/wl-copy'
+
       # Pass terminal focus in/out events to programs in the panes
       # (requested by Claude Code)
       set -g focus-events on
@@ -149,8 +164,8 @@ in
   # ------------------------------------------------------------- alacritty
   # NixOS has no programs.alacritty module, so the config is installed by hand.
   #
-  # It stays a real TOML file instead of a Nix string: the keybindings contain
-  # \u001B escapes, a form Nix strings do not support and would corrupt.
+  # It stays a real TOML file instead of a Nix string: the URL hint regex
+  # contains \u escapes, a form Nix strings do not support and would corrupt.
   #
   # /etc/xdg is on XDG_CONFIG_DIRS, which Alacritty 0.17 searches right after
   # the user config (verified with strace; the /etc/alacritty path named in
@@ -196,5 +211,6 @@ in
     fortune # fish greeting
     cowsay # fish greeting
     libnotify # notify-send, used by weechat/python/notify_send.py
+    wl-clipboard # wl-copy/wl-paste; backs tmux's copy-command above
   ];
 }
