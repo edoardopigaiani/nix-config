@@ -9,11 +9,17 @@
 { config, pkgs, ... }:
 
 let
-  # FreeType leaves stem darkening off for CFF fonts such as JetBrains Mono;
-  # turning it on thickens strokes the way macOS does. It is set on Alacritty
-  # alone so the rest of GNOME keeps its rendering. symlinkJoin wraps the
-  # cached binary instead of rebuilding it, and the desktop entry's
-  # Exec=alacritty resolves to the wrapper through PATH.
+  # FreeType leaves stem darkening off for CFF fonts; turning it on thickens
+  # strokes the way macOS does. It is set on Alacritty alone so the rest of
+  # GNOME keeps its rendering. symlinkJoin wraps the cached binary instead of
+  # rebuilding it, and the desktop entry's Exec=alacritty resolves to the
+  # wrapper through PATH.
+  #
+  # Note this is currently inert: alacritty.toml selects the Cozette bitmap, for
+  # which FreeType reports render_mode "Mono" and antialiases nothing, so there
+  # are no greyscale edges to darken. It is kept for the scalable fonts -- the
+  # font.size/font.normal comments there spell out how narrow the bitmap's
+  # usable sizes are, and switching back makes this matter again.
   alacrittyWrapped = pkgs.symlinkJoin {
     name = "alacritty-${pkgs.alacritty.version}";
     paths = [ pkgs.alacritty ];
@@ -193,10 +199,15 @@ in
   # systemPackages only happened to work because NixOS also scans the system
   # profile.
   fonts.packages = with pkgs; [
-    jetbrains-mono # "JetBrains Mono", the Alacritty font
-    cozette # "CozetteVector", pixel font, sharp only at 13px multiples
-    terminus_font_ttf # "Terminus (TTF)", the original Alacritty font
-    terminus_font # Terminus bitmap (PCF) variants
+    # Family names matter here, because alacritty.toml selects by family and
+    # style, and one package can register several families.
+    cozette # "Cozette", the Alacritty font: bitmap, strikes at 13px
+    # ("Medium") and 26px ("HiDpi") only. Also registers the scalable
+    # "CozetteVector", which is a different family and is not in use.
+    jetbrains-mono # "JetBrains Mono", the previous Alacritty font, kept as a
+    # scalable option; has no braille or check marks, so those fell back.
+    terminus_font_ttf # "Terminus (TTF)", the Alacritty font before that
+    terminus_font # Terminus bitmap (PCF/OTB) variants, 12px to 32px
   ];
 
   # ---------------------------------------------------------------- packages

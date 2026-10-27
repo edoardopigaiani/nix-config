@@ -3,42 +3,82 @@ general.live_config_reload = true
 
 [bell]
 animation = "Linear"
-color = "#ffffff"
+color = '#f7f3ea'
 duration = 0
 
+# ------------------------------------------------------------------ colors
+# "Noir Essence Dark", ported from the VS Code theme of the same name
+# (u1145h.u1145h-heme-ark, themes/noir_essence_dark.json). The ANSI slots use
+# the theme's own terminal.ansi* mapping, so two quirks below are the theme's
+# and not typos: it defines bright == normal for everything but black, and
+# being Gruvbox Material derived it puts gruvbox aqua in green and gruvbox
+# green in cyan.
 [colors]
+# The theme gives bright and normal the same values, so this only still
+# matters for bright black (bold on a dark grey background).
 draw_bold_text_with_bright_colors = true
 
-# Default colors
 [colors.primary]
-background = '#000000'
-foreground = '#ffffff'
+background = '#000000'   # editor.background is #111314; overridden to pure black
+foreground = '#f7f3ea'   # terminal.foreground
 
 [colors.cursor]
-text = '#1d1f21'
-cursor = '#c5c8c6'
+cursor = '#a9b665'       # terminalCursor.foreground
+text   = '#334743'       # terminalCursor.background
+
+[colors.vi_mode_cursor]
+cursor = '#7daea3'
+text   = '#111314'
+
+[colors.selection]
+# terminal.selectionBackground is #f7f3ea10; Alacritty takes no alpha here, so
+# this uses editor.selectionBackground, which is the same grey the theme puts
+# in ansi black.
+background = '#2b2d2d'
+text       = 'CellForeground'
+
+[colors.search.matches]
+background = '#4f666f'   # editor.findMatchBackground
+foreground = '#f7f3ea'
+
+[colors.search.focused_match]
+background = '#e78a4e'
+foreground = '#111314'
+
+[colors.hints.start]
+background = '#e78a4e'
+foreground = '#111314'
+
+[colors.hints.end]
+background = '#2b2d2d'
+foreground = '#f7f3ea'
+
+[colors.footer_bar]
+background = '#161819'   # editorWidget.background
+foreground = '#f7f3ea'
 
 # Normal colors
 [colors.normal]
+# The theme puts #2b2d2d here; overridden to pure black to match the background.
 black   = '#000000'
-red     = '#a54242'
-green   = '#8c9440'
-yellow  = '#de935f'
-blue    = '#5f819d'
-magenta = '#85678f'
-cyan    = '#5e8d87'
-white   = '#ffffff'
+red     = '#ea6962'
+green   = '#89b482'
+yellow  = '#e78a4e'
+blue    = '#7daea3'
+magenta = '#d3869b'
+cyan    = '#a9b665'
+white   = '#f7f3ea'
 
 # Bright colors
 [colors.bright]
-black   = '#373b41'
-red     = '#cc6666'
-green   = '#b5bd68'
-yellow  = '#f0c674'
-blue    = '#81a2be'
-magenta = '#b294bb'
-cyan    = '#8abeb7'
-white   = '#ffffff'
+black   = '#434545'
+red     = '#ea6962'
+green   = '#89b482'
+yellow  = '#e78a4e'
+blue    = '#7daea3'
+magenta = '#d3869b'
+cyan    = '#a9b665'
+white   = '#f7f3ea'
 
 [cursor]
 style = "block"
@@ -52,15 +92,32 @@ render_timer = false
 TERM = "xterm-256color"
 
 [font]
-size = 11
+# Cozette is a bitmap, so size is an enum here, not a range: it is sharp only
+# at the pixel sizes it was drawn at, and it ships two strikes -- cozette.otb
+# at 13 px and cozette_hidpi.otb at 26 px. Alacritty converts points on a
+# 96 DPI base, so only 9.75 and 19.5 keep it crisp; anything else interpolates.
+#
+# 9.75 gives a 6x13 cell. eDP-1 is 29x17 cm at 1920x1080 (~166 DPI, unscaled),
+# so that is ~2 mm tall -- a little smaller than the old "Terminus (TTF)" at
+# 12 pt (8x17, ~2.6 mm). No 16 px Cozette strike exists, so matching Terminus
+# and staying pixel-exact were mutually exclusive.
+size = 9.75
 
 [font.normal]
-family = "JetBrains Mono"
-style = "Regular"
+family = "Cozette"
+# The style name is what selects the strike: "Medium" is the 13 px cozette.otb,
+# "HiDpi" the 26 px cozette_hidpi.otb. It must stay in step with size above,
+# because fontconfig matches style and pixel size together and a mismatch does
+# not error -- it quietly lands on an interpolated strike.
+style = "Medium"
 
 [font.bold]
-family = "JetBrains Mono"
-style = "Bold"
+# Cozette has no bold bitmap; its only bold is the vector CozetteVectorBold,
+# whose metrics would not line up with the bitmap cells. So bold points at the
+# same strike, and is told apart by brightness alone, via
+# draw_bold_text_with_bright_colors in the colors section above.
+family = "Cozette"
+style = "Medium"
 
 [font.glyph_offset]
 x = 0
