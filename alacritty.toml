@@ -19,7 +19,7 @@ duration = 0
 draw_bold_text_with_bright_colors = true
 
 [colors.primary]
-background = '#000000'   # editor.background is #111314; overridden to pure black
+background = '#111314'   # editor.background / panel.background
 foreground = '#f7f3ea'   # terminal.foreground
 
 [colors.cursor]
@@ -59,8 +59,8 @@ foreground = '#f7f3ea'
 
 # Normal colors
 [colors.normal]
-# The theme puts #2b2d2d here; overridden to pure black to match the background.
-black   = '#000000'
+# The theme puts #2b2d2d here; overridden to match the background.
+black   = '#111314'
 red     = '#ea6962'
 green   = '#89b482'
 yellow  = '#e78a4e'
@@ -141,6 +141,10 @@ y = 0
 # as ;3 (which is Alt), while the arrows in the same file correctly used ;3
 # for Alt.
 #
+# Ctrl+L is deliberately not bound. Alacritty's defaults pair ClearLogNotice
+# with a second binding that sends ^L (form feed) to the shell; restating
+# ClearLogNotice here replaced both, so Ctrl+L stopped clearing the screen.
+#
 # See alacritty-bindings(5) for the full list of defaults.
 
 [[keyboard.bindings]]
@@ -185,11 +189,6 @@ key = "Paste"
 [[keyboard.bindings]]
 action = "Copy"
 key = "Copy"
-
-[[keyboard.bindings]]
-action = "ClearLogNotice"
-key = "L"
-mods = "Control"
 
 [[keyboard.bindings]]
 action = "ScrollPageUp"
