@@ -194,11 +194,36 @@ in
     ];
 
   # -------------------------------------------------------------- neovim
-  # The NixOS module rather than a bare package: it also installs a system-wide
-  # sysinit.vim, which is where extra plugins or configure.customRC would go.
-  # The Lua config itself stays mutable in ~/.config/nvim. wl-clipboard below
-  # is what backs the "+ register on Wayland.
-  programs.neovim.enable = true;
+  # Plugins and config are both declared here, so the wrapper starts nvim with
+  # -u pointing at the generated init; nvim.lua sources ~/.config/nvim/init.lua
+  # itself for anything untracked. wl-clipboard below is what backs the "+
+  # register on Wayland.
+  programs.neovim = {
+    enable = true;
+    configure = {
+      customLuaRC = builtins.readFile ./nvim.lua;
+      packages.default.start = with pkgs.vimPlugins; [
+        claudecode-nvim
+        snacks-nvim # claudecode.nvim's terminal provider
+        nvim-lspconfig # server definitions for vim.lsp.enable
+        # Neovim already bundles c, lua, markdown, query, vim and vimdoc.
+        (nvim-treesitter.withPlugins (
+          p: with p; [
+            nix
+            bash
+            fish
+            python
+            toml
+            json
+            yaml
+            diff
+            gitcommit
+            git_rebase
+          ]
+        ))
+      ];
+    };
+  };
 
   # ---------------------------------------------------------------- fonts
   # The terminal font belongs here rather than in environment.systemPackages:
@@ -232,5 +257,9 @@ in
     cowsay # fish greeting
     libnotify # notify-send, used by weechat/python/notify_send.py
     wl-clipboard # wl-copy/wl-paste; backs tmux's copy-command above
+    ripgrep # rg, for snacks' and Claude's searches
+    fd
+    nixd # Nix language server, enabled in nvim.lua
+    lua-language-server # lua_ls, enabled in nvim.lua
   ];
 }
