@@ -15,7 +15,8 @@ duration = 0
 # green in cyan.
 [colors]
 # The theme gives bright and normal the same values, so this only still
-# matters for bright black (bold on a dark grey background).
+# matters for black: since black is the background colour, bold black text
+# would be invisible without being lifted to bright black.
 draw_bold_text_with_bright_colors = true
 
 [colors.primary]
@@ -92,32 +93,29 @@ render_timer = false
 TERM = "xterm-256color"
 
 [font]
-# Cozette is a bitmap, so size is an enum here, not a range: it is sharp only
-# at the pixel sizes it was drawn at, and it ships two strikes -- cozette.otb
-# at 13 px and cozette_hidpi.otb at 26 px. Alacritty converts points on a
-# 96 DPI base, so only 9.75 and 19.5 keep it crisp; anything else interpolates.
+# Tamzen is a bitmap, so size is an enum here, not a range: it is sharp only at
+# the pixel sizes it was drawn at, one .otb per size -- 9, 12, 13, 14, 15, 16
+# and 20 px. Alacritty converts points on a 96 DPI base (pt = px * 0.75), so
+# the crisp sizes are 6.75, 9, 9.75, 10.5, 11.25, 12 and 15; anything else
+# quietly lands on an interpolated strike instead of erroring.
 #
-# 9.75 gives a 6x13 cell. eDP-1 is 29x17 cm at 1920x1080 (~166 DPI, unscaled),
-# so that is ~2 mm tall -- a little smaller than the old "Terminus (TTF)" at
-# 12 pt (8x17, ~2.6 mm). No 16 px Cozette strike exists, so matching Terminus
-# and staying pixel-exact were mutually exclusive.
-size = 9.75
+# 12 gives the 8x16 strike. eDP-1 is 29x17 cm at 1920x1080 (~166 DPI,
+# unscaled), so that is ~2.5 mm tall -- close to the old "Terminus (TTF)" at
+# 12 pt (8x17, ~2.6 mm).
+size = 12
 
+# Unlike Cozette, the style does not pick the strike: every size has the same
+# "Regular" and "Bold", and size above alone chooses between them. Plain
+# "Tamzen" is used rather than "TamzenForPowerline", since nothing in the
+# prompt or tmux draws powerline glyphs.
 [font.normal]
-family = "Cozette"
-# The style name is what selects the strike: "Medium" is the 13 px cozette.otb,
-# "HiDpi" the 26 px cozette_hidpi.otb. It must stay in step with size above,
-# because fontconfig matches style and pixel size together and a mismatch does
-# not error -- it quietly lands on an interpolated strike.
-style = "Medium"
+family = "Tamzen"
+style = "Regular"
 
 [font.bold]
-# Cozette has no bold bitmap; its only bold is the vector CozetteVectorBold,
-# whose metrics would not line up with the bitmap cells. So bold points at the
-# same strike, and is told apart by brightness alone, via
-# draw_bold_text_with_bright_colors in the colors section above.
-family = "Cozette"
-style = "Medium"
+# A real bold bitmap at every size, so bold differs in shape, not just colour.
+family = "Tamzen"
+style = "Bold"
 
 [font.glyph_offset]
 x = 0

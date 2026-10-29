@@ -15,7 +15,7 @@ let
   # rebuilding it, and the desktop entry's Exec=alacritty resolves to the
   # wrapper through PATH.
   #
-  # Note this is currently inert: alacritty.toml selects the Cozette bitmap, for
+  # Note this is currently inert: alacritty.toml selects the Tamzen bitmap, for
   # which FreeType reports render_mode "Mono" and antialiases nothing, so there
   # are no greyscale edges to darken. It is kept for the scalable fonts -- the
   # font.size/font.normal comments there spell out how narrow the bitmap's
@@ -193,6 +193,13 @@ in
       "L+ ${dir}/darkblue.micro - - - - ${./darkblue.micro}"
     ];
 
+  # -------------------------------------------------------------- neovim
+  # The NixOS module rather than a bare package: it also installs a system-wide
+  # sysinit.vim, which is where extra plugins or configure.customRC would go.
+  # The Lua config itself stays mutable in ~/.config/nvim. wl-clipboard below
+  # is what backs the "+ register on Wayland.
+  programs.neovim.enable = true;
+
   # ---------------------------------------------------------------- fonts
   # The terminal font belongs here rather than in environment.systemPackages:
   # fonts.packages is the option that registers a font with fontconfig, while
@@ -201,8 +208,10 @@ in
   fonts.packages = with pkgs; [
     # Family names matter here, because alacritty.toml selects by family and
     # style, and one package can register several families.
-    cozette # "Cozette", the Alacritty font: bitmap, strikes at 13px
-    # ("Medium") and 26px ("HiDpi") only. Also registers the scalable
+    tamzen # "Tamzen", the Alacritty font: bitmap, Regular and Bold at 9 and
+    # 12-16 and 20px. Also registers "TamzenForPowerline", not in use.
+    cozette # "Cozette", the Alacritty font before that: bitmap, 13px
+    # ("Medium") and 26px ("HiDpi") only, no bold. Also registers the scalable
     # "CozetteVector", which is a different family and is not in use.
     jetbrains-mono # "JetBrains Mono", the previous Alacritty font, kept as a
     # scalable option; has no braille or check marks, so those fell back.

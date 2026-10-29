@@ -195,6 +195,7 @@
     github-desktop
     localsend
     spotify
+    mpv
   ];
 
   programs.nix-ld.enable = true;
