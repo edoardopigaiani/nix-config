@@ -3,42 +3,83 @@ general.live_config_reload = true
 
 [bell]
 animation = "Linear"
-color = "#ffffff"
+color = '#f7f3ea'
 duration = 0
 
+# ------------------------------------------------------------------ colors
+# "Noir Essence Dark", ported from the VS Code theme of the same name
+# (u1145h.u1145h-heme-ark, themes/noir_essence_dark.json). The ANSI slots use
+# the theme's own terminal.ansi* mapping, so two quirks below are the theme's
+# and not typos: it defines bright == normal for everything but black, and
+# being Gruvbox Material derived it puts gruvbox aqua in green and gruvbox
+# green in cyan.
 [colors]
+# The theme gives bright and normal the same values, so this only still
+# matters for black: since black is the background colour, bold black text
+# would be invisible without being lifted to bright black.
 draw_bold_text_with_bright_colors = true
 
-# Default colors
 [colors.primary]
-background = '#000000'
-foreground = '#ffffff'
+background = '#111314'   # editor.background / panel.background
+foreground = '#f7f3ea'   # terminal.foreground
 
 [colors.cursor]
-text = '#1d1f21'
-cursor = '#c5c8c6'
+cursor = '#a9b665'       # terminalCursor.foreground
+text   = '#334743'       # terminalCursor.background
+
+[colors.vi_mode_cursor]
+cursor = '#7daea3'
+text   = '#111314'
+
+[colors.selection]
+# terminal.selectionBackground is #f7f3ea10; Alacritty takes no alpha here, so
+# this uses editor.selectionBackground, which is the same grey the theme puts
+# in ansi black.
+background = '#2b2d2d'
+text       = 'CellForeground'
+
+[colors.search.matches]
+background = '#4f666f'   # editor.findMatchBackground
+foreground = '#f7f3ea'
+
+[colors.search.focused_match]
+background = '#e78a4e'
+foreground = '#111314'
+
+[colors.hints.start]
+background = '#e78a4e'
+foreground = '#111314'
+
+[colors.hints.end]
+background = '#2b2d2d'
+foreground = '#f7f3ea'
+
+[colors.footer_bar]
+background = '#161819'   # editorWidget.background
+foreground = '#f7f3ea'
 
 # Normal colors
 [colors.normal]
-black   = '#000000'
-red     = '#a54242'
-green   = '#8c9440'
-yellow  = '#de935f'
-blue    = '#5f819d'
-magenta = '#85678f'
-cyan    = '#5e8d87'
-white   = '#ffffff'
+# The theme puts #2b2d2d here; overridden to match the background.
+black   = '#111314'
+red     = '#ea6962'
+green   = '#89b482'
+yellow  = '#e78a4e'
+blue    = '#7daea3'
+magenta = '#d3869b'
+cyan    = '#a9b665'
+white   = '#f7f3ea'
 
 # Bright colors
 [colors.bright]
-black   = '#373b41'
-red     = '#cc6666'
-green   = '#b5bd68'
-yellow  = '#f0c674'
-blue    = '#81a2be'
-magenta = '#b294bb'
-cyan    = '#8abeb7'
-white   = '#ffffff'
+black   = '#434545'
+red     = '#ea6962'
+green   = '#89b482'
+yellow  = '#e78a4e'
+blue    = '#7daea3'
+magenta = '#d3869b'
+cyan    = '#a9b665'
+white   = '#f7f3ea'
 
 [cursor]
 style = "block"
@@ -52,14 +93,28 @@ render_timer = false
 TERM = "xterm-256color"
 
 [font]
-size = 11
+# Tamzen is a bitmap, so size is an enum here, not a range: it is sharp only at
+# the pixel sizes it was drawn at, one .otb per size -- 9, 12, 13, 14, 15, 16
+# and 20 px. Alacritty converts points on a 96 DPI base (pt = px * 0.75), so
+# the crisp sizes are 6.75, 9, 9.75, 10.5, 11.25, 12 and 15; anything else
+# quietly lands on an interpolated strike instead of erroring.
+#
+# 12 gives the 8x16 strike. eDP-1 is 29x17 cm at 1920x1080 (~166 DPI,
+# unscaled), so that is ~2.5 mm tall -- close to the old "Terminus (TTF)" at
+# 12 pt (8x17, ~2.6 mm).
+size = 12
 
+# Unlike Cozette, the style does not pick the strike: every size has the same
+# "Regular" and "Bold", and size above alone chooses between them. Plain
+# "Tamzen" is used rather than "TamzenForPowerline", since nothing in the
+# prompt or tmux draws powerline glyphs.
 [font.normal]
-family = "JetBrains Mono"
+family = "Tamzen"
 style = "Regular"
 
 [font.bold]
-family = "JetBrains Mono"
+# A real bold bitmap at every size, so bold differs in shape, not just colour.
+family = "Tamzen"
 style = "Bold"
 
 [font.glyph_offset]
@@ -83,6 +138,10 @@ y = 0
 # copies were wrong too, encoding Alt as ;6 (which is Ctrl+Shift) and Super
 # as ;3 (which is Alt), while the arrows in the same file correctly used ;3
 # for Alt.
+#
+# Ctrl+L is deliberately not bound. Alacritty's defaults pair ClearLogNotice
+# with a second binding that sends ^L (form feed) to the shell; restating
+# ClearLogNotice here replaced both, so Ctrl+L stopped clearing the screen.
 #
 # See alacritty-bindings(5) for the full list of defaults.
 
@@ -128,11 +187,6 @@ key = "Paste"
 [[keyboard.bindings]]
 action = "Copy"
 key = "Copy"
-
-[[keyboard.bindings]]
-action = "ClearLogNotice"
-key = "L"
-mods = "Control"
 
 [[keyboard.bindings]]
 action = "ScrollPageUp"
