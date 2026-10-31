@@ -196,6 +196,7 @@
     localsend
     spotify
     mpv
+    glow
   ];
 
   programs.nix-ld.enable = true;
