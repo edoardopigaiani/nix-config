@@ -206,6 +206,14 @@ in
         claudecode-nvim
         snacks-nvim # claudecode.nvim's terminal provider
         nvim-lspconfig # server definitions for vim.lsp.enable
+        # The Noir Essence port, as a one-file plugin providing
+        # :colorscheme noir_essence.
+        (pkgs.linkFarm "noir-essence-nvim" [
+          {
+            name = "colors/noir_essence.lua";
+            path = ./noir_essence.lua;
+          }
+        ])
         # Neovim already bundles c, lua, markdown, query, vim and vimdoc.
         (nvim-treesitter.withPlugins (
           p: with p; [

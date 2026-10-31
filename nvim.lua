@@ -7,6 +7,11 @@
 vim.g.mapleader = " "
 vim.g.maplocalleader = " "
 
+-- Alacritty is truecolour, and tmux passes RGB through for it (terminal-features
+-- in terminal.nix), so the colorscheme's hex values arrive as they are.
+vim.o.termguicolors = true
+vim.cmd.colorscheme("noir_essence")
+
 -- ------------------------------------------------------------ claude code
 -- claudecode.nvim speaks the same WebSocket protocol as the VS Code extension,
 -- so Claude sees the current file and selection, can read LSP diagnostics, and
