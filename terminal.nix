@@ -204,7 +204,9 @@ in
       customLuaRC = builtins.readFile ./nvim.lua;
       packages.default.start = with pkgs.vimPlugins; [
         claudecode-nvim
-        snacks-nvim # claudecode.nvim's terminal provider
+        snacks-nvim # claudecode.nvim's terminal provider, and the picker
+        gitsigns-nvim
+        which-key-nvim
         nvim-lspconfig # server definitions for vim.lsp.enable
         # The Noir Essence port, as a one-file plugin providing
         # :colorscheme noir_essence.
@@ -268,6 +270,7 @@ in
     ripgrep # rg, for snacks' and Claude's searches
     fd
     nixd # Nix language server, enabled in nvim.lua
+    nixfmt # what nixd formats with, on save in Neovim
     lua-language-server # lua_ls, enabled in nvim.lua
   ];
 }
