@@ -10,10 +10,10 @@
 
 let
   # FreeType leaves stem darkening off for CFF fonts; turning it on thickens
-  # strokes the way macOS does. It is set on Alacritty alone so the rest of
+  # strokes the way macOS does. It is set on the terminals alone so the rest of
   # GNOME keeps its rendering. symlinkJoin wraps the cached binary instead of
-  # rebuilding it, and the desktop entry's Exec=alacritty resolves to the
-  # wrapper through PATH.
+  # rebuilding it, and the desktop entries' Exec=alacritty / Exec=foot resolve
+  # to the wrappers through PATH.
   #
   # Note this is currently inert: alacritty.toml selects the Tamzen bitmap, for
   # which FreeType reports render_mode "Mono" and antialiases nothing, so there
@@ -33,6 +33,19 @@ let
       wrapProgram $out/bin/alacritty \
         --set FREETYPE_PROPERTIES "cff:no-stem-darkening=0" \
         --set FONTCONFIG_FILE ${./alacritty-fontconfig.conf}
+    '';
+  };
+
+  # Here stem darkening is not inert: foot uses JetBrains Mono, whose OTF build
+  # is CFF. No FONTCONFIG_FILE, since a scalable primary font has no bitmap
+  # cells for fallback glyphs to tower over.
+  footWrapped = pkgs.symlinkJoin {
+    name = "foot-${pkgs.foot.version}";
+    paths = [ pkgs.foot ];
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    postBuild = ''
+      wrapProgram $out/bin/foot \
+        --set FREETYPE_PROPERTIES "cff:no-stem-darkening=0"
     '';
   };
 in
@@ -102,6 +115,7 @@ in
     # placeholders in status-right when it loads.
     extraConfigBeforePlugins = ''
       set -as terminal-features ",alacritty*:RGB"
+      set -as terminal-features ",foot*:RGB"
 
       # remap prefix from 'C-b' to 'C-a'
       unbind C-b
@@ -185,6 +199,104 @@ in
   # ~/.config/alacritty/alacritty.toml therefore still takes precedence.
   environment.etc."xdg/alacritty/alacritty.toml".source = ./alacritty.toml;
 
+  # ------------------------------------------------------------------ foot
+  # A port of alacritty.toml to foot, with JetBrains Mono in place of Tamzen.
+  # The module writes /etc/xdg/foot/foot.ini, which ~/.config/foot/foot.ini
+  # overrides. Settings equal to foot's defaults are left out: Ctrl+Shift+C/V,
+  # Shift+Insert, Ctrl+0/+/-, Ctrl+Shift+N, Shift+PageUp/Down, middle-click
+  # paste, the hollow unfocused cursor and Alacritty's semantic_escape_chars
+  # (foot's word-delimiters) all already match. foot has no live reload; new
+  # windows read the file.
+  programs.foot = {
+    enable = true;
+    package = footWrapped;
+    settings = {
+      main = {
+        # Rendering as close to macOS Terminal as FreeType gets: greyscale
+        # antialiasing with no subpixel colour fringes (rgba=none), light
+        # vertical-only hinting that keeps glyph shapes (hintslight), and stem
+        # darkening from the wrapper above, which FreeType applies to CFF
+        # outlines only -- hence fontformat=CFF, pinning the OTF build of
+        # JetBrains Mono over the TTF one installed alongside. Bold and italic
+        # inherit these from the primary font.
+        font = "JetBrains Mono:size=11:fontformat=CFF:antialias=true:rgba=none:hintstyle=hintslight";
+        # Linear blending makes light-on-dark text thinner; macOS blends in
+        # sRGB, which is part of why its text looks fuller.
+        gamma-correct-blending = "no";
+
+        # Alacritty's draw_bold_text_with_bright_colors: bold regular colours
+        # switch to their bright palette entry. That only changes black here,
+        # as the theme's bright and normal colours are otherwise equal.
+        bold-text-in-bright = "palette-based";
+
+        # Alacritty sets TERM=xterm-256color; foot's own entry is more
+        # accurate, and ncurses ships it.
+        term = "foot";
+
+        # window: padding 10x10 with dynamic_padding, maximized, no decorations.
+        pad = "10x10 center";
+        initial-window-mode = "maximized";
+      };
+
+      # Alacritty's bell is silent (duration = 0, and it has no audible bell).
+      bell.system = "no";
+
+      scrollback = {
+        lines = 10000;
+        multiplier = 3;
+      };
+
+      cursor.blink = "no";
+
+      # decorations = "None". GNOME has no server-side decorations, so without
+      # this foot would draw its own title bar.
+      csd.preferred = "none";
+
+      key-bindings = {
+        # Alacritty's Shift+Alt+U / Shift+Alt+D, on top of foot's defaults.
+        scrollback-up-page = "Shift+Page_Up Shift+KP_Page_Up Mod1+Shift+u";
+        scrollback-down-page = "Shift+Page_Down Shift+KP_Page_Down Mod1+Shift+d";
+        # Alacritty's URL hint key, kept alongside foot's Ctrl+Shift+O. URL
+        # mode opens with xdg-open by default, like the hint did.
+        show-urls-launch = "Control+Shift+o Control+Shift+h";
+      };
+
+      # Noir Essence Dark, the same values as alacritty.toml's [colors].
+      colors-dark = {
+        background = "111314";
+        foreground = "f7f3ea";
+        cursor = "334743 a9b665"; # text, then cursor
+        # foot has no CellForeground; the default foreground is what nearly
+        # every selected cell would show anyway.
+        selection-foreground = "f7f3ea";
+        selection-background = "2b2d2d";
+        # Alacritty's hint and search-match colours.
+        jump-labels = "111314 e78a4e";
+        search-box-match = "111314 e78a4e";
+        search-box-no-match = "111314 ea6962";
+        scrollback-indicator = "f7f3ea 161819";
+        urls = "7daea3";
+
+        regular0 = "111314";
+        regular1 = "ea6962";
+        regular2 = "89b482";
+        regular3 = "e78a4e";
+        regular4 = "7daea3";
+        regular5 = "d3869b";
+        regular6 = "a9b665";
+        regular7 = "f7f3ea";
+        bright0 = "434545";
+        bright1 = "ea6962";
+        bright2 = "89b482";
+        bright3 = "e78a4e";
+        bright4 = "7daea3";
+        bright5 = "d3869b";
+        bright6 = "a9b665";
+        bright7 = "f7f3ea";
+      };
+    };
+  };
+
   # ---------------------------------------------------------------- micro
   # micro only reads user colorschemes from ~/.config/micro/colorschemes, so the
   # Alacritty-matching scheme is linked there. Selecting it is left to micro
@@ -254,8 +366,9 @@ in
     cozette # "Cozette", the Alacritty font before that: bitmap, 13px
     # ("Medium") and 26px ("HiDpi") only, no bold. Also registers the scalable
     # "CozetteVector", which is a different family and is not in use.
-    jetbrains-mono # "JetBrains Mono", the previous Alacritty font, kept as a
-    # scalable option; has no braille or check marks, so those fell back.
+    jetbrains-mono # "JetBrains Mono", foot's font and a previous Alacritty
+    # one. Ships both OTF (CFF) and TTF builds; foot.ini pins the CFF one.
+    # Has no braille or check marks, so those fall back.
     terminus_font_ttf # "Terminus (TTF)", the Alacritty font before that
     terminus_font # Terminus bitmap (PCF/OTB) variants, 12px to 32px
   ];
