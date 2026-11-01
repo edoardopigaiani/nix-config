@@ -20,25 +20,18 @@ let
   # are no greyscale edges to darken. It is kept for the scalable fonts -- the
   # font.size/font.normal comments there spell out how narrow the bitmap's
   # usable sizes are, and switching back makes this matter again.
-  #
-  # FONTCONFIG_FILE is the same trick for font matching: it replaces the
-  # primary fontconfig file, and the replacement includes the system one before
-  # shrinking fallback glyphs. See alacritty-fontconfig.conf for why a matrix is
-  # the lever and what it does not cover.
   alacrittyWrapped = pkgs.symlinkJoin {
     name = "alacritty-${pkgs.alacritty.version}";
     paths = [ pkgs.alacritty ];
     nativeBuildInputs = [ pkgs.makeWrapper ];
     postBuild = ''
       wrapProgram $out/bin/alacritty \
-        --set FREETYPE_PROPERTIES "cff:no-stem-darkening=0" \
-        --set FONTCONFIG_FILE ${./alacritty-fontconfig.conf}
+        --set FREETYPE_PROPERTIES "cff:no-stem-darkening=0"
     '';
   };
 
   # Here stem darkening is not inert: foot uses JetBrains Mono, whose OTF build
-  # is CFF. No FONTCONFIG_FILE, since a scalable primary font has no bitmap
-  # cells for fallback glyphs to tower over.
+  # is CFF.
   footWrapped = pkgs.symlinkJoin {
     name = "foot-${pkgs.foot.version}";
     paths = [ pkgs.foot ];
