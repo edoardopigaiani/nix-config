@@ -168,12 +168,19 @@ let
     };
 
     # Inhibits the idle lock below, for a long video or a presentation.
+    #
+    # "{icon}" and not "{status}": waybar-idle-inhibitor(5) defines {status}
+    # as the literal words "activated"/"deactivated", while {icon} is what
+    # looks up format-icons. With {status} the map below is dead code and the
+    # bar reads "deactivated", which says nothing about what the module is.
     idle_inhibitor = {
-      format = "{status}";
+      format = "{icon}";
       format-icons = {
         activated = "AWAKE";
         deactivated = "idle";
       };
+      tooltip-format-activated = "Blocco automatico inibito";
+      tooltip-format-deactivated = "Blocco automatico dopo 10 min";
     };
 
     # Where Cryptomator, Telegram and Spotify dock now that the GNOME panel
