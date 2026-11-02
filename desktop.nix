@@ -2,9 +2,15 @@
 # Import it from configuration.nix:
 #   imports = [ ./hardware-configuration.nix ./terminal.nix ./nix-builds.nix ./desktop.nix ];
 #
-# This is phase 1 of the migration: niri is installed *alongside* GNOME and
-# GDM lists both sessions, so the session is chosen at login and GNOME stays
-# one logout away. Nothing here disables GNOME.
+# Migration state: phases 1 and 2 are done. niri is the default session and
+# tuigreet has replaced GDM, but GNOME is still installed and still listed by
+# the greeter (F3), so it remains one logout away. Phase 3 -- removing GNOME,
+# gnome-tweaks and the dconf trackpoint workaround, and swapping
+# power-profiles-daemon for tlp -- is deliberately not done here; it is the
+# step that is hard to walk back, and nothing forces it.
+#
+# The two phases are separate commits. Reverting the phase 2 commit alone
+# gives GDM back without touching anything else.
 #
 # Design rules followed throughout, both inherited from terminal.nix:
 #
@@ -202,6 +208,77 @@ in
     pkgs.mako
   ];
   systemd.user.services.xwayland-satellite = sessionService;
+
+  # --------------------------------------------------------------- greetd
+  # Migration phase 2: GDM is off (configuration.nix) and the login screen is
+  # tuigreet on VT1. GNOME is still installed and still selectable -- the
+  # --sessions path below is the same directory GDM read, holding both
+  # gnome.desktop and niri.desktop -- so the fallback survives this phase.
+  #
+  # Most of the wiring comes from the module and is deliberately not repeated
+  # here: it aliases greetd to display-manager.service, sets
+  # restartIfChanged = false so a rebuild cannot kill the running session,
+  # creates /var/cache/tuigreet for --remember's state, orders itself after
+  # plymouth-quit-wait, and sets enableGnomeKeyring from
+  # services.gnome.gnome-keyring.enable -- which desktop.nix turns on, so the
+  # keyring still unlocks at login the way it did under GDM.
+  services.greetd = {
+    enable = true;
+
+    # Adjusts the unit's StandardInput/TTYPath so boot messages cannot scribble
+    # over a TUI greeter. Without it tuigreet shares VT1 with the kernel log.
+    useTextGreeter = true;
+
+    settings.default_session.command = toString [
+      "${pkgs.tuigreet}/bin/tuigreet"
+      "--time"
+      "--asterisks"
+      # Remembers the username, and the session each user last picked, so
+      # logging in is Enter-password-Enter once niri has been chosen the
+      # first time.
+      "--remember"
+      "--remember-user-session"
+      # The session list, which is what keeps GNOME reachable. Same derivation
+      # the display-manager module builds for any greeter.
+      "--sessions ${config.services.displayManager.sessionData.desktops}/share/wayland-sessions"
+      # Used only until --remember-user-session has something stored.
+      "--cmd niri-session"
+      # Spelled out rather than left to the defaults, so the cheat sheet can
+      # state them: F2 command, F3 sessions, F12 power.
+      "--kb-command 2"
+      "--kb-sessions 3"
+      "--kb-power 12"
+      # Named ANSI colours rather than hex: the Linux VT is a 16-colour
+      # terminal and ignores truecolour escapes. console.colors below remaps
+      # those 16 slots to Noir Essence, so "cyan" here really is #a9b665.
+      "--theme 'container=black;border=lightblack;title=white;greet=white;time=cyan;prompt=green;input=white;action=blue;button=yellow'"
+    ];
+  };
+
+  # The kernel console palette, set to Noir Essence so the greeter, the TTYs
+  # and the terminals inside the session all draw from one set of colours.
+  # Values are the ANSI slots from alacritty.toml's [colors.normal] and
+  # [colors.bright], in the order the kernel expects and without the leading
+  # '#'. The theme defines bright == normal for everything but black, which is
+  # why slots 9-15 repeat 1-7.
+  console.colors = [
+    "111314" # 0  black, and the console background
+    "ea6962" # 1  red
+    "89b482" # 2  green
+    "e78a4e" # 3  yellow (the theme's orange)
+    "7daea3" # 4  blue
+    "d3869b" # 5  magenta
+    "a9b665" # 6  cyan (the theme's lime, used as the accent)
+    "f7f3ea" # 7  white
+    "434545" # 8  bright black -- the one slot that really differs
+    "ea6962" # 9  bright red
+    "89b482" # 10 bright green
+    "e78a4e" # 11 bright yellow
+    "7daea3" # 12 bright blue
+    "d3869b" # 13 bright magenta
+    "a9b665" # 14 bright cyan
+    "f7f3ea" # 15 bright white
+  ];
 
   # ---------------------------------------------------------------- waybar
   programs.waybar = {

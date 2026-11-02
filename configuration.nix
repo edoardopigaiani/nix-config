@@ -133,8 +133,12 @@
     LC_TIME = "it_IT.UTF-8";
   };
 
-  # Enable the GNOME Desktop Environment.
-  services.displayManager.gdm.enable = true;
+  # GNOME is kept installed, but no longer runs the login screen: migration
+  # phase 2 replaced GDM with greetd + tuigreet (see desktop.nix). GNOME stays
+  # here as the fallback session -- tuigreet lists it alongside niri under F3 --
+  # and phase 3 is what removes it. gnome-keyring's PAM auto-unlock, which GDM
+  # used to do, is carried over by the greetd module.
+  services.displayManager.gdm.enable = false;
   services.desktopManager.gnome.enable = true;
 
   # The X395 trackpoint is an Elantech device, so hardware.trackpoint's sysfs
