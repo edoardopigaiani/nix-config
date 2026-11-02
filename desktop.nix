@@ -378,6 +378,39 @@ in
   # Phase 3 is where ppd comes out and tlp goes in; `powerprofilesctl` works
   # from the command line under niri in the meantime.
 
+  # --------------------------------------------------- GNOME leftovers
+  # niri runs XDG autostart entries (the niri module sets
+  # runXdgAutostartIfNone, and niri.service Wants xdg-desktop-autostart.target),
+  # so every autostart file GNOME dragged in gets evaluated in this session
+  # too. Most are gated by OnlyShowIn=GNOME and stay put. ibus is the one that
+  # is not -- and the gate is inverted:
+  #
+  #   ibus-daemon.desktop: NotShowIn=GNOME;KDE;
+  #
+  # The entry exists *for* sessions like this one, and GNOME is what installed
+  # it, via services.desktopManager.gnome -> core-os-services:
+  #   i18n.inputMethod.enable = mkDefault true;
+  #   i18n.inputMethod.type   = mkDefault "ibus";
+  # which is why it never appeared under GNOME and greets you with a
+  # notification on every niri login.
+  #
+  # Measured in a running niri session: 7 ibus processes, 215 MiB RSS, for an
+  # input method an Italian keyboard layout never invokes. The entire GNOME
+  # session this migration replaces was 439 MiB, so leaving it on would hand
+  # back half of what the move buys. mkDefault above means plain false wins.
+  i18n.inputMethod.enable = false;
+
+  # Two more things to know before phase 3, both from that same GNOME block:
+  #
+  #   - hardware.bluetooth.enable is mkDefault true there, so removing GNOME
+  #     silently turns Bluetooth off. If it is in use, phase 3 has to set it
+  #     explicitly (and add blueman or bluetuith, since the GNOME panel goes).
+  #
+  #   - evolution-alarm-notify's autostart entry has no OnlyShowIn at all, so
+  #     it is eligible here. It is not running in practice (nothing to alarm
+  #     about with no calendars configured), which is why it is left alone
+  #     rather than masked; it disappears with evolution in phase 3.
+
   # ------------------------------------------------------------- brightness
   # brightnessctl's udev rules chgrp the backlight sysfs node to "video" and
   # the keyboard LED node to "input", then make them group-writable; without
