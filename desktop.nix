@@ -48,7 +48,9 @@ let
   # swaylock's own config file lives under its Nix store prefix, which is
   # read-only and not on any search path that matters, so the theme is passed
   # as flags instead. Colours are RRGGBB with no leading '#', which is
-  # swaylock's format, and 00000000 is fully transparent.
+  # swaylock's format, and 00000000 is fully transparent. The font is Tamzen
+  # at a fixed 16px, its 8x16 strike: without --font-size swaylock sizes the
+  # text from the indicator radius, which would scale the bitmap.
   #
   # Only swayidle invokes this: `loginctl lock-session` raises logind's Lock
   # signal, swayidle's `lock` event catches it, and Mod+Shift+L in niri.kdl
@@ -75,7 +77,8 @@ let
       --separator-color 00000000 \
       --indicator-radius 90 \
       --indicator-thickness 8 \
-      --font "JetBrains Mono"
+      --font "Tamzen" \
+      --font-size 16
   '';
 
   # --------------------------------------------------------- waybar config
@@ -84,8 +87,9 @@ let
   # module and alacritty.toml.
   #
   # Note what is NOT here: glyph icons. fonts.packages has no Nerd Font, and
-  # JetBrains Mono has no symbol coverage, so icon-based formats would render
-  # as tofu boxes. The text labels below instead follow the tmux status bar in
+  # the bar's font, Tamzen, covers only ASCII and part of Latin-1, so
+  # icon-based formats would render as tofu boxes or fall back to another
+  # font. The text labels below instead follow the tmux status bar in
   # terminal.nix, which already writes battery as "B: 85%".
   waybarConfig = (pkgs.formats.json { }).generate "waybar-config" {
     layer = "top";
@@ -443,7 +447,8 @@ in
         icon-theme = "Adwaita";
         cursor-theme = "Adwaita";
         font-name = "Cantarell 11";
-        monospace-font-name = "JetBrains Mono 11";
+        # GNOME 48's own default, part of the Adwaita font family.
+        monospace-font-name = "Adwaita Mono 11";
       };
     }
   ];
@@ -474,6 +479,7 @@ in
   # The terminal fonts stay in terminal.nix.
   fonts.packages = with pkgs; [
     cantarell-fonts # the UI font the gsettings above name
+    adwaita-fonts # Adwaita Mono, the monospace font the gsettings above name
     noto-fonts # broad coverage for anything the UI font lacks
     noto-fonts-color-emoji # emoji in Telegram and web pages
   ];
