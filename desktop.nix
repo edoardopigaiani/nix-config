@@ -115,6 +115,7 @@ let
       "idle_inhibitor"
       "wireplumber"
       "backlight"
+      "bluetooth"
       "network"
       "battery"
     ];
@@ -168,6 +169,24 @@ let
     backlight = {
       format = "L: {percent}%";
       scroll-step = 5;
+    };
+
+    # "BT" because B: is the battery. Shows the connected device's name, or
+    # whether the adapter is on; the tooltip lists every connected device.
+    bluetooth = {
+      format = "BT: ON";
+      format-off = "BT: OFF";
+      format-disabled = "BT: OFF";
+      format-no-controller = "";
+      format-connected = "BT: {device_alias}";
+      format-connected-battery = "BT: {device_alias} {device_battery_percentage}%";
+      max-length = 30;
+      tooltip-format = "{controller_alias}  {controller_address}";
+      tooltip-format-connected = "{controller_alias}  {controller_address}\n\n{device_enumerate}";
+      tooltip-format-enumerate-connected = "{device_alias}  {device_address}";
+      tooltip-format-enumerate-connected-battery = "{device_alias}  {device_address}  {device_battery_percentage}%";
+      # bluetui scans, pairs, trusts and connects; no applet needed.
+      on-click = "${foot} -a bluetui ${pkgs.bluetui}/bin/bluetui";
     };
 
     network = {
@@ -390,6 +409,18 @@ in
   services.udisks2.enable = true; # the mount backend udiskie drives
   services.gvfs.enable = true; # trash:// and network mounts for yazi/Nautilus
   services.upower.enable = true; # the battery data waybar reads
+
+  # ------------------------------------------------------------- bluetooth
+  # Set explicitly: today GNOME's module turns it on with mkDefault, and phase 3
+  # would otherwise lose it without a word. Devices are picked with bluetui,
+  # from the waybar BT: module or as `bluetui` in a terminal.
+  hardware.bluetooth = {
+    enable = true;
+    powerOnBoot = true;
+    # BlueZ's experimental features include the battery level of connected
+    # devices, which waybar's format-connected-battery shows.
+    settings.General.Experimental = true;
+  };
   services.gnome.gnome-keyring.enable = true; # VSCode and GitHub Desktop secrets
 
   # power-profiles-daemon stays, and tlp is deliberately NOT enabled yet:
@@ -424,8 +455,8 @@ in
   # Two more things to know before phase 3, both from that same GNOME block:
   #
   #   - hardware.bluetooth.enable is mkDefault true there, so removing GNOME
-  #     silently turns Bluetooth off. If it is in use, phase 3 has to set it
-  #     explicitly (and add blueman or bluetuith, since the GNOME panel goes).
+  #     would silently turn Bluetooth off. It is now set explicitly (see
+  #     "bluetooth" above), so this one is already handled.
   #
   #   - evolution-alarm-notify's autostart entry has no OnlyShowIn at all, so
   #     it is eligible here. It is not running in practice (nothing to alarm
@@ -504,6 +535,7 @@ in
     brightnessctl # XF86MonBrightness keys
     playerctl # XF86Audio play/next/prev
     wiremix # TUI mixer, replaces pavucontrol
+    bluetui # TUI Bluetooth manager, replaces the GNOME panel's Bluetooth page
     udiskie # automount; udiskie-umount to unmount
     yazi # TUI file manager, replaces Nautilus for everyday use
     wlsunset # night light

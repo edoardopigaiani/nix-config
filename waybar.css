@@ -59,6 +59,7 @@ window#waybar {
 #tray,
 #wireplumber,
 #backlight,
+#bluetooth,
 #battery,
 #network,
 #clock,
@@ -151,6 +152,11 @@ window#waybar.empty #window {
 
 #idle_inhibitor.activated {
   color: @lime;
+}
+
+/* White in every state, OFF included: the label already says it. */
+#bluetooth {
+  color: @foreground;
 }
 
 /* ------------------------------------------------------------------ tray */
