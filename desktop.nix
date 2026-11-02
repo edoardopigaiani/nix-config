@@ -35,6 +35,8 @@
 { config, pkgs, ... }:
 
 let
+  foot = "${config.programs.foot.package}/bin/foot";
+
   # ----------------------------------------------------------- niri config
   # The KDL is checked at build time, so a typo fails `nh os switch` with the
   # parse error instead of handing you a compositor that will not start. niri
@@ -91,6 +93,12 @@ let
   # icon-based formats would render as tofu boxes or fall back to another
   # font. The text labels below instead follow the tmux status bar in
   # terminal.nix, which already writes battery as "B: 85%".
+  #
+  # Click commands use absolute store paths. waybar runs as a systemd user
+  # service, whose PATH does not include /run/current-system/sw/bin, so a bare
+  # "foot" or "wpctl" fails with "command not found" and the click does
+  # nothing. foot is config.programs.foot.package, the wrapped one terminal.nix
+  # configures.
   waybarConfig = (pkgs.formats.json { }).generate "waybar-config" {
     layer = "top";
     position = "top";
@@ -152,8 +160,8 @@ let
     wireplumber = {
       format = "V: {volume}%";
       format-muted = "V: --";
-      on-click = "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle";
-      on-click-right = "foot -a wiremix wiremix";
+      on-click = "${pkgs.wireplumber}/bin/wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle";
+      on-click-right = "${foot} -a wiremix ${pkgs.wiremix}/bin/wiremix";
       scroll-step = 5;
     };
 
@@ -168,7 +176,7 @@ let
       format-disconnected = "N: offline";
       tooltip-format = "{ifname}  {ipaddr}";
       # nmtui ships with NetworkManager; no applet needed.
-      on-click = "foot -a nmtui nmtui";
+      on-click = "${foot} -a nmtui ${pkgs.networkmanager}/bin/nmtui";
     };
 
     # Inhibits the idle lock below, for a long video or a presentation.
