@@ -4,16 +4,16 @@
 -- colors/noir_essence.lua, so it is selected with :colorscheme noir_essence.
 --
 -- The background is left to the terminal, so Neovim always matches the shell
--- around it; Alacritty sets it to the theme's #111314. VS Code colours with an
--- alpha channel are flattened onto #111314, since Neovim highlights take no
--- alpha; the source value is noted where it differs.
+-- around it; Alacritty sets it to pure black, overriding the theme's #111314.
+-- VS Code colours with an alpha channel are flattened onto that black, since
+-- Neovim highlights take no alpha; the source value is noted where it differs.
 
 vim.cmd("highlight clear")
 vim.g.colors_name = "noir_essence"
 vim.o.background = "dark"
 
 local c = {
-  bg = "#111314", -- editor.background
+  bg = "#000000", -- pure black; editor.background is #111314
   fg = "#f7f3ea", -- editor.foreground
   red = "#ea6962", -- variables, properties, tags, headings
   orange = "#e78a4e", -- constants, numbers, attributes
@@ -35,18 +35,18 @@ local c = {
   split = "#444444", -- editorGroup.border
   find = "#4f666f", -- editor.findMatchBackground
 
-  line_hl = "#1a1c1d", -- editor.lineHighlightBackground #ffffff0A
-  line_nr = "#3c3d3c", -- editorLineNumber.foreground #f7f3ea30
-  indent = "#2a2c2b", -- editorIndentGuide.background #f7f3ea1c
-  dim = "#4b4b4a", -- tab.inactiveForeground #f7f3ea40
-  status = "#979691", -- statusBar.foreground #f7f3ea95
-  find_other = "#583b27", -- editor.findMatchHighlightBackground #e78a4e55
-  word_hl = "#444444", -- editor.wordHighlightBackground #575757b8
-  word_hl_strong = "#3b3e3e", -- editor.wordHighlightStrongBackground #4b4f4eb8
-  diff_add = "#2f3424", -- diffEditor.insertedTextBackground #a9b66533
-  diff_delete = "#3c2424", -- diffEditor.removedTextBackground #ea696233
-  diff_change = "#273231", -- the theme has none; blue at the same 0x33
-  diff_text = "#374946", -- blue at 0x59, to stand out within a changed line
+  line_hl = "#0a0a0a", -- editor.lineHighlightBackground #ffffff0A
+  line_nr = "#2e2e2c", -- editorLineNumber.foreground #f7f3ea30
+  indent = "#1b1b1a", -- editorIndentGuide.background #f7f3ea1c
+  dim = "#3e3d3b", -- tab.inactiveForeground #f7f3ea40
+  status = "#908e89", -- statusBar.foreground #f7f3ea95
+  find_other = "#4d2e1a", -- editor.findMatchHighlightBackground #e78a4e55
+  word_hl = "#3f3f3f", -- editor.wordHighlightBackground #575757b8
+  word_hl_strong = "#363938", -- editor.wordHighlightStrongBackground #4b4f4eb8
+  diff_add = "#222414", -- diffEditor.insertedTextBackground #a9b66533
+  diff_delete = "#2f1514", -- diffEditor.removedTextBackground #ea696233
+  diff_change = "#192321", -- the theme has none; blue at the same 0x33
+  diff_text = "#2c3d39", -- blue at 0x59, to stand out within a changed line
 }
 
 local groups = {

@@ -35,6 +35,9 @@ input {
         // keystroke, so a thumb brushing the pad mid-sentence cannot move the
         // cursor. GNOME had this on by default.
         dwt
+        // Maximum pointer speed: libinput's accel-speed runs -1.0..1.0.
+        // configuration.nix sets the same in GNOME's dconf for the fallback.
+        accel-speed 1.0
     }
 
     trackpoint {
@@ -72,7 +75,7 @@ layout {
     // installed: there is no wallpaper, just the palette's background colour,
     // so an empty workspace looks like an empty terminal. Point swaybg at an
     // image here instead if you ever want one.
-    background-color "#111314"
+    background-color "#000000"
 
     // Columns stay where they are instead of sliding to the centre when
     // focused. "never" keeps the scroll position predictable, which matters

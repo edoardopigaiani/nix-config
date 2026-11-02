@@ -254,9 +254,10 @@ in
         show-urls-launch = "Control+Shift+o Control+Shift+h";
       };
 
-      # Noir Essence Dark, the same values as alacritty.toml's [colors].
+      # Noir Essence Dark, the same values as alacritty.toml's [colors],
+      # including the pure-black background and color0.
       colors-dark = {
-        background = "111314";
+        background = "000000";
         foreground = "f7f3ea";
         cursor = "334743 a9b665"; # text, then cursor
         # foot has no CellForeground; the default foreground is what nearly
@@ -264,13 +265,13 @@ in
         selection-foreground = "f7f3ea";
         selection-background = "2b2d2d";
         # Alacritty's hint and search-match colours.
-        jump-labels = "111314 e78a4e";
-        search-box-match = "111314 e78a4e";
-        search-box-no-match = "111314 ea6962";
+        jump-labels = "000000 e78a4e";
+        search-box-match = "000000 e78a4e";
+        search-box-no-match = "000000 ea6962";
         scrollback-indicator = "f7f3ea 161819";
         urls = "7daea3";
 
-        regular0 = "111314";
+        regular0 = "000000";
         regular1 = "ea6962";
         regular2 = "89b482";
         regular3 = "e78a4e";

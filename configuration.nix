@@ -148,6 +148,10 @@
       settings."org/gnome/desktop/peripherals/pointingstick" = {
         speed = 1.0; # -1.0 .. 1.0 (default 0.0)
       };
+      # Touchpad at maximum speed too, matching accel-speed in niri.kdl.
+      settings."org/gnome/desktop/peripherals/touchpad" = {
+        speed = 1.0;
+      };
     }
   ];
 

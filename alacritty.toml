@@ -20,7 +20,7 @@ duration = 0
 draw_bold_text_with_bright_colors = true
 
 [colors.primary]
-background = '#111314'   # editor.background / panel.background
+background = '#000000'   # editor.background is #111314; overridden to pure black
 foreground = '#f7f3ea'   # terminal.foreground
 
 [colors.cursor]
@@ -29,7 +29,7 @@ text   = '#334743'       # terminalCursor.background
 
 [colors.vi_mode_cursor]
 cursor = '#7daea3'
-text   = '#111314'
+text   = '#000000'
 
 [colors.selection]
 # terminal.selectionBackground is #f7f3ea10; Alacritty takes no alpha here, so
@@ -44,11 +44,11 @@ foreground = '#f7f3ea'
 
 [colors.search.focused_match]
 background = '#e78a4e'
-foreground = '#111314'
+foreground = '#000000'
 
 [colors.hints.start]
 background = '#e78a4e'
-foreground = '#111314'
+foreground = '#000000'
 
 [colors.hints.end]
 background = '#2b2d2d'
@@ -60,8 +60,8 @@ foreground = '#f7f3ea'
 
 # Normal colors
 [colors.normal]
-# The theme puts #2b2d2d here; overridden to match the background.
-black   = '#111314'
+# The theme puts #2b2d2d here; overridden to pure black to match the background.
+black   = '#000000'
 red     = '#ea6962'
 green   = '#89b482'
 yellow  = '#e78a4e'

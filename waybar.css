@@ -12,7 +12,7 @@
  * Palette: "Noir Essence Dark", the same values as alacritty.toml's [colors]
  * and the foot block in terminal.nix. */
 
-@define-color background  #111314;  /* editor.background, == terminal bg */
+@define-color background  #000000;  /* pure black, == terminal bg (theme: #111314) */
 @define-color surface     #161819;  /* editorWidget.background */
 @define-color overlay     #2b2d2d;  /* editor.selectionBackground */
 @define-color muted       #434545;  /* ansi bright black */

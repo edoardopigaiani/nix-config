@@ -56,7 +56,7 @@ let
   # the lock before suspend.
   lockCommand = ''
     ${pkgs.swaylock}/bin/swaylock -f \
-      --color 111314 \
+      --color 000000 \
       --inside-color 161819 \
       --inside-clear-color 161819 \
       --inside-ver-color 161819 \
@@ -269,7 +269,7 @@ in
   # '#'. The theme defines bright == normal for everything but black, which is
   # why slots 9-15 repeat 1-7.
   console.colors = [
-    "111314" # 0  black, and the console background
+    "000000" # 0  black, and the console background
     "ea6962" # 1  red
     "89b482" # 2  green
     "e78a4e" # 3  yellow (the theme's orange)
