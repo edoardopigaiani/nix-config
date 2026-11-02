@@ -150,22 +150,22 @@ let
     # session manager, and the native module reads it without the pulse
     # compatibility layer in between.
     wireplumber = {
-      format = "VOL {volume}%";
-      format-muted = "VOL --";
+      format = "V: {volume}%";
+      format-muted = "V: --";
       on-click = "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle";
       on-click-right = "foot -a wiremix wiremix";
       scroll-step = 5;
     };
 
     backlight = {
-      format = "LUM {percent}%";
+      format = "L: {percent}%";
       scroll-step = 5;
     };
 
     network = {
-      format-wifi = "{essid} {signalStrength}%";
-      format-ethernet = "eth";
-      format-disconnected = "offline";
+      format-wifi = "N: {essid} {signalStrength}%";
+      format-ethernet = "N: eth";
+      format-disconnected = "N: offline";
       tooltip-format = "{ifname}  {ipaddr}";
       # nmtui ships with NetworkManager; no applet needed.
       on-click = "foot -a nmtui nmtui";
@@ -180,11 +180,12 @@ let
     idle_inhibitor = {
       format = "{icon}";
       format-icons = {
-        activated = "AWAKE";
-        deactivated = "idle";
+        activated = "Coffee mode";
+        deactivated = "Idle";
       };
-      tooltip-format-activated = "Blocco automatico inibito";
-      tooltip-format-deactivated = "Blocco automatico dopo 10 min";
+      # 10 min is swayidle's lock timeout below.
+      tooltip-format-activated = "Automatic lock disabled";
+      tooltip-format-deactivated = "Automatic lock after 10 min";
     };
 
     # Where Cryptomator, Telegram and Spotify dock now that the GNOME panel

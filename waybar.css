@@ -27,7 +27,7 @@
 * {
   /* Tamzen, the same face and 8x15 strike as Alacritty and foot, so the bar
    * and the terminal below it read as one surface. It works here because the
-   * modules are plain-text labels (B:, VOL, LUM, AWAKE) with no icon glyphs,
+   * modules are plain-text labels (B:, V:, L:, N:, Idle) with no icon glyphs,
    * and because Tamzen ships OTB files, the only bitmap format Pango still
    * loads. The size must stay 15px: a bitmap is only sharp at its own strike
    * sizes (9 and 12-16 and 20px), and anything else gets scaled. */

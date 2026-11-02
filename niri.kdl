@@ -93,12 +93,11 @@ layout {
 
     // The focus indicator. niri draws either a focus ring (outside the window)
     // or a border (inside it); using only the ring keeps windows at the size
-    // they asked for. The active colour is the palette's lime, which is what
-    // alacritty.toml uses for the terminal cursor, so "where the focus is"
-    // looks the same in the compositor and inside a terminal.
+    // they asked for. The active colour is the palette's blue (ansi blue,
+    // textLink.foreground in the VS Code theme).
     focus-ring {
         width 2
-        active-color "#a9b665"
+        active-color "#7daea3"
         inactive-color "#434545"
     }
 
