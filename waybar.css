@@ -1,0 +1,180 @@
+/* waybar, the status bar that replaces the GNOME top panel.
+ *
+ * Installed by desktop.nix as /etc/xdg/waybar/style.css. waybar searches
+ * XDG_CONFIG_DIRS, so ~/.config/waybar/style.css still overrides this file;
+ * the matching module layout lives in desktop.nix as Nix, because unlike this
+ * stylesheet it has no syntax Nix would mangle.
+ *
+ * This is GTK3 CSS, not browser CSS: no flexbox, no custom properties, and
+ * only the subset of selectors GTK implements. @define-color is the GTK way
+ * of naming a colour once.
+ *
+ * Palette: "Noir Essence Dark", the same values as alacritty.toml's [colors]
+ * and the foot block in terminal.nix. */
+
+@define-color background  #111314;  /* editor.background, == terminal bg */
+@define-color surface     #161819;  /* editorWidget.background */
+@define-color overlay     #2b2d2d;  /* editor.selectionBackground */
+@define-color muted       #434545;  /* ansi bright black */
+@define-color foreground  #f7f3ea;
+@define-color red         #ea6962;
+@define-color green       #89b482;
+@define-color orange      #e78a4e;
+@define-color blue        #7daea3;
+@define-color magenta     #d3869b;
+@define-color lime        #a9b665;  /* terminalCursor.foreground, the accent */
+
+* {
+  /* JetBrains Mono, the same face foot uses, so the bar and the terminal
+   * below it read as one surface. Tamzen is deliberately not used here: it is
+   * a bitmap with only a handful of usable pixel sizes and no coverage for
+   * the symbols the bar draws. */
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  /* GTK draws a rounded shadow on tooltips and menus otherwise. */
+  border: none;
+  border-radius: 0;
+  min-height: 0;
+}
+
+window#waybar {
+  background-color: @background;
+  color: @foreground;
+  /* A hairline that separates the bar from a maximised window underneath. */
+  border-bottom: 1px solid @muted;
+}
+
+/* Every module gets the same breathing room; the bar is 10px padded on the
+ * sides to line up with foot's own 10x10 padding. */
+.modules-left,
+.modules-center,
+.modules-right {
+  padding: 0 4px;
+}
+
+#workspaces button,
+#window,
+#tray,
+#wireplumber,
+#backlight,
+#battery,
+#network,
+#clock,
+#idle_inhibitor {
+  padding: 0 8px;
+  color: @foreground;
+  background-color: transparent;
+}
+
+/* ------------------------------------------------------------ workspaces */
+#workspaces button {
+  color: @muted;
+  /* The marker sits under the label rather than around it, which keeps the
+   * row from jumping when a workspace appears or disappears -- niri creates
+   * and destroys them dynamically. */
+  border-bottom: 2px solid transparent;
+}
+
+#workspaces button.active {
+  color: @foreground;
+  border-bottom: 2px solid @lime;
+}
+
+#workspaces button.urgent {
+  color: @background;
+  background-color: @red;
+}
+
+#workspaces button:hover {
+  color: @foreground;
+  background-color: @overlay;
+}
+
+/* ---------------------------------------------------------------- window */
+#window {
+  color: @muted;
+}
+
+window#waybar.empty #window {
+  /* No window focused: collapse the title rather than leave a gap. */
+  padding: 0;
+}
+
+/* ----------------------------------------------------------------- state */
+#clock {
+  color: @foreground;
+}
+
+#battery {
+  color: @green;
+}
+
+#battery.charging {
+  color: @lime;
+}
+
+#battery.warning:not(.charging) {
+  color: @orange;
+}
+
+#battery.critical:not(.charging) {
+  color: @red;
+  /* GTK keyframe animation; the only motion anywhere in the bar, reserved
+   * for the one state that should interrupt you. */
+  animation: blink 1s steps(2, start) infinite;
+}
+
+@keyframes blink {
+  to {
+    color: @foreground;
+  }
+}
+
+#network.disconnected,
+#wireplumber.muted {
+  color: @red;
+}
+
+#network {
+  color: @blue;
+}
+
+#backlight {
+  color: @orange;
+}
+
+#wireplumber {
+  color: @magenta;
+}
+
+#idle_inhibitor.activated {
+  color: @lime;
+}
+
+/* ------------------------------------------------------------------ tray */
+/* This is what Cryptomator, Telegram and Spotify dock into now that the
+ * GNOME panel is gone; waybar is built with StatusNotifierItem support. */
+#tray menu {
+  background-color: @surface;
+  color: @foreground;
+  border: 1px solid @muted;
+}
+
+#tray > .passive {
+  -gtk-icon-effect: dim;
+}
+
+#tray > .needs-attention {
+  -gtk-icon-effect: highlight;
+}
+
+/* -------------------------------------------------------------- tooltips */
+tooltip {
+  background-color: @surface;
+  border: 1px solid @muted;
+}
+
+tooltip label {
+  color: @foreground;
+  padding: 2px 4px;
+}

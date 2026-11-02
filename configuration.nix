@@ -10,6 +10,7 @@
     ./hardware-configuration.nix
     ./terminal.nix
     ./nix-builds.nix
+    ./desktop.nix
   ];
 
   boot.initrd.luks.devices."luks-8187315b-979b-4665-a691-f00ec33b0965".allowDiscards = true;
@@ -40,8 +41,21 @@
     "flakes"
   ];
 
-  # Limit boot menu entries (prevents the EFI partition from filling up)
-  boot.loader.systemd-boot.configurationLimit = 10;
+  # Limit boot menu entries (prevents the EFI partition from filling up).
+  #
+  # Raised from 10 to 30 for the GNOME-to-niri migration: tuning a compositor
+  # takes a burst of rebuilds, and at 10 the generation that still boots into
+  # GNOME would drop out of the menu within an evening. This is nearly free
+  # here -- every generation so far shares one kernel and one initrd, which
+  # systemd-boot stores once under its store hash, so /boot sits at 48 MiB of
+  # 1022. A kernel bump is what actually costs space; drop this back if /boot
+  # ever gets tight.
+  boot.loader.systemd-boot.configurationLimit = 30;
+
+  # The default 5s is hard to catch with Plymouth covering the handoff, and
+  # the whole point of keeping the GNOME generations around is being able to
+  # pick one. Lower it again once niri is the only session.
+  boot.loader.timeout = 15;
 
   # Graphical boot: Plymouth shows the firmware logo and asks for the LUKS
   # passphrase graphically. This needs the systemd initrd, which is the default.

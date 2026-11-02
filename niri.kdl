@@ -1,0 +1,296 @@
+// niri, the scrollable-tiling Wayland compositor that replaces GNOME Shell.
+//
+// Installed by desktop.nix as /etc/niri/config.kdl, which is the system
+// fallback niri reads when ~/.config/niri/config.kdl does not exist (the path
+// is compiled into the binary; `strings` on it shows "/etc/niri/config.kdl").
+// A user file therefore still wins, which is what makes live experimentation
+// possible without a rebuild: copy this file there, edit, and niri reloads it
+// on save.
+//
+// `niri validate -c niri.kdl` checks this file without starting a session, and
+// desktop.nix runs exactly that at build time, so a syntax error fails the
+// rebuild instead of dropping you into a black screen.
+//
+// Colours are "Noir Essence Dark", the same palette as alacritty.toml and the
+// foot block in terminal.nix. They are written out rather than shared because
+// this is a real KDL file, the same trade-off alacritty.toml already makes.
+// alacritty.toml's [colors] section is the reference copy.
+
+// -------------------------------------------------------------------- input
+input {
+    keyboard {
+        xkb {
+            // services.xserver.xkb.layout does NOT reach niri: it only writes
+            // /etc/X11/xorg.conf.d/00-keyboard.conf, which a Wayland
+            // compositor never reads. The layout has to be repeated here, and
+            // console.keyMap still covers the TTYs separately.
+            layout "it"
+        }
+    }
+
+    touchpad {
+        tap
+        natural-scroll
+        // Disable-while-typing: suppresses the touchpad for a moment after a
+        // keystroke, so a thumb brushing the pad mid-sentence cannot move the
+        // cursor. GNOME had this on by default.
+        dwt
+    }
+
+    trackpoint {
+        // The direct translation of the dconf hack this replaces:
+        // org/gnome/desktop/peripherals/pointingstick speed = 1.0. GNOME's
+        // "speed" is libinput's accel-speed, same -1.0..1.0 scale, so the
+        // value carries over unchanged. Once GNOME is removed in phase 3 the
+        // dconf block in configuration.nix can go with it.
+        accel-speed 1.0
+    }
+
+    // Moving the pointer over a window focuses it, but only while the pointer
+    // is inside the already-focused column's neighbours; 0% means never scroll
+    // the view just because the pointer drifted.
+    focus-follows-mouse max-scroll-amount="0%"
+}
+
+// ------------------------------------------------------------------- output
+output "eDP-1" {
+    // Pinned to 1 on purpose. The panel is 1920x1080 on 13.3" (~166 DPI), and
+    // niri picks a fractional scale from the EDID when left alone, which would
+    // suddenly make everything bigger than it is under GNOME today. Change
+    // this to 1.25 or 1.5 if you want larger UI; terminal font sizes are set
+    // separately in alacritty.toml / terminal.nix.
+    scale 1
+    // niri picks the highest refresh rate it can by itself; `mode` is left
+    // unset so an external panel swap cannot make the session fail to start.
+}
+
+// ------------------------------------------------------------------- layout
+layout {
+    gaps 8
+
+    // The desktop background, drawn by niri itself. This is why swaybg is not
+    // installed: there is no wallpaper, just the palette's background colour,
+    // so an empty workspace looks like an empty terminal. Point swaybg at an
+    // image here instead if you ever want one.
+    background-color "#111314"
+
+    // Columns stay where they are instead of sliding to the centre when
+    // focused. "never" keeps the scroll position predictable, which matters
+    // more on a 13" screen than the symmetry does.
+    center-focused-column "never"
+
+    // Mod+R cycles through these.
+    preset-column-widths {
+        proportion 0.33333
+        proportion 0.5
+        proportion 0.66667
+    }
+
+    default-column-width { proportion 0.5; }
+
+    // The focus indicator. niri draws either a focus ring (outside the window)
+    // or a border (inside it); using only the ring keeps windows at the size
+    // they asked for. The active colour is the palette's lime, which is what
+    // alacritty.toml uses for the terminal cursor, so "where the focus is"
+    // looks the same in the compositor and inside a terminal.
+    focus-ring {
+        width 2
+        active-color "#a9b665"
+        inactive-color "#434545"
+    }
+
+    border {
+        off
+    }
+
+    // Room reserved at the top for waybar. waybar is a layer-shell client and
+    // reserves its own space, so this stays at 0; it is here as the knob to
+    // turn if a bar ever overlaps windows.
+    struts {
+        left 0
+        right 0
+        top 0
+        bottom 0
+    }
+}
+
+// ------------------------------------------------------------- misc session
+// Ask clients to let the compositor draw decorations. Most GTK apps honour it
+// and lose their rounded CSD title bars, which both saves vertical space and
+// makes them match foot (csd.preferred = "none" in terminal.nix).
+prefer-no-csd
+
+// Where the built-in screenshot action writes. niri has screenshots natively,
+// which is why grim/slurp/swappy are not installed.
+screenshot-path "~/Pictures/Screenshots/Screenshot from %Y-%m-%d %H-%M-%S.png"
+
+hotkey-overlay {
+    // Do not show the keybinding cheat sheet at every login; Mod+F1 opens it
+    // on demand.
+    skip-at-startup
+}
+
+environment {
+    // X11 clients (Steam above all) find the X server through this. niri has
+    // no built-in XWayland: xwayland-satellite provides it as a user service,
+    // and it always claims display :0. Without this line Steam exits with
+    // "cannot open display".
+    DISPLAY ":0"
+}
+
+cursor {
+    xcursor-theme "Adwaita"
+    xcursor-size 24
+}
+
+// ------------------------------------------------------------------ overview
+overview {
+    backdrop-color "#0b0d0e"
+}
+
+// --------------------------------------------------------------- animations
+animations {
+    // The X395 is a 4-thread laptop with an integrated GPU; the default
+    // animations are cheap but this scales them all down at once if the
+    // session ever feels sluggish. Set to 0 to turn them off entirely.
+    slowdown 0.7
+}
+
+// --------------------------------------------------------------- keybindings
+//
+// Mod is the Super (Windows) key throughout.
+//
+// Two notes on the Italian layout, which drove several of these choices:
+//   - niri matches on keysyms, so bindings must use keys that exist unshifted
+//     on "it". minus, plus, comma and period all do; slash does not (it is
+//     Shift+7), which is why the hotkey overlay is on F1 rather than on
+//     niri's upstream default of Mod+Shift+Slash.
+//   - the digits 1-9 are unshifted on "it", so the workspace bindings are the
+//     conventional ones.
+binds {
+    // ---------------------------------------------------------- launching
+    Mod+F1 { show-hotkey-overlay; }
+
+    Mod+Return hotkey-overlay-title="Terminal: foot" { spawn "foot"; }
+    Mod+D hotkey-overlay-title="Launcher: fuzzel" { spawn "fuzzel"; }
+    Mod+B hotkey-overlay-title="Browser: Firefox" { spawn "firefox"; }
+    // yazi is the file manager that replaces Nautilus; it runs in a terminal.
+    Mod+E hotkey-overlay-title="Files: yazi" { spawn "foot" "-a" "yazi" "yazi"; }
+    // Not Mod+L: that is "focus the column to the right" below, and `niri
+    // validate` rejects the duplicate.
+    Mod+Shift+L hotkey-overlay-title="Lock the screen" { spawn "loginctl" "lock-session"; }
+
+    // ------------------------------------------------------------ windows
+    Mod+Q repeat=false { close-window; }
+
+    // Focus. hjkl and the arrows do the same thing: left/right move between
+    // columns, up/down between the windows stacked inside one column.
+    Mod+H     { focus-column-left; }
+    Mod+L     { focus-column-right; }
+    Mod+J     { focus-window-down; }
+    Mod+K     { focus-window-up; }
+    Mod+Left  { focus-column-left; }
+    Mod+Right { focus-column-right; }
+    Mod+Down  { focus-window-down; }
+    Mod+Up    { focus-window-up; }
+
+    // Move the focused column/window. Same keys with Ctrl held.
+    Mod+Ctrl+H     { move-column-left; }
+    Mod+Ctrl+L     { move-column-right; }
+    Mod+Ctrl+J     { move-window-down; }
+    Mod+Ctrl+K     { move-window-up; }
+    Mod+Ctrl+Left  { move-column-left; }
+    Mod+Ctrl+Right { move-column-right; }
+    Mod+Ctrl+Down  { move-window-down; }
+    Mod+Ctrl+Up    { move-window-up; }
+
+    Mod+Home { focus-column-first; }
+    Mod+End  { focus-column-last; }
+    Mod+Ctrl+Home { move-column-to-first; }
+    Mod+Ctrl+End  { move-column-to-last; }
+
+    // ------------------------------------------------------------- sizing
+    Mod+R       { switch-preset-column-width; }
+    Mod+Shift+R { switch-preset-window-height; }
+    Mod+F       { maximize-column; }
+    Mod+Shift+F { fullscreen-window; }
+    Mod+C       { center-column; }
+
+    Mod+Minus { set-column-width "-10%"; }
+    Mod+Plus  { set-column-width "+10%"; }
+    Mod+Shift+Minus { set-window-height "-10%"; }
+    Mod+Shift+Plus  { set-window-height "+10%"; }
+
+    // Pull the window to the right into this column / push the bottom one out
+    // into its own column. This is how you build a stacked column.
+    Mod+Comma  { consume-window-into-column; }
+    Mod+Period { expel-window-from-column; }
+
+    // Show the column's windows as tabs instead of stacked.
+    Mod+W { toggle-column-tabbed-display; }
+
+    // Floating, for the odd dialog that does not tile well.
+    Mod+Shift+Space { toggle-window-floating; }
+    Mod+Space       { switch-focus-between-floating-and-tiling; }
+
+    // --------------------------------------------------------- workspaces
+    Mod+O   { toggle-overview; }
+    Mod+Tab { focus-workspace-previous; }
+
+    Mod+Page_Down { focus-workspace-down; }
+    Mod+Page_Up   { focus-workspace-up; }
+    Mod+Ctrl+Page_Down { move-column-to-workspace-down; }
+    Mod+Ctrl+Page_Up   { move-column-to-workspace-up; }
+
+    Mod+1 { focus-workspace 1; }
+    Mod+2 { focus-workspace 2; }
+    Mod+3 { focus-workspace 3; }
+    Mod+4 { focus-workspace 4; }
+    Mod+5 { focus-workspace 5; }
+    Mod+6 { focus-workspace 6; }
+    Mod+7 { focus-workspace 7; }
+    Mod+8 { focus-workspace 8; }
+    Mod+9 { focus-workspace 9; }
+
+    Mod+Ctrl+1 { move-column-to-workspace 1; }
+    Mod+Ctrl+2 { move-column-to-workspace 2; }
+    Mod+Ctrl+3 { move-column-to-workspace 3; }
+    Mod+Ctrl+4 { move-column-to-workspace 4; }
+    Mod+Ctrl+5 { move-column-to-workspace 5; }
+    Mod+Ctrl+6 { move-column-to-workspace 6; }
+    Mod+Ctrl+7 { move-column-to-workspace 7; }
+    Mod+Ctrl+8 { move-column-to-workspace 8; }
+    Mod+Ctrl+9 { move-column-to-workspace 9; }
+
+    // Touchpad and mouse wheel scroll the columns when Mod is held.
+    Mod+WheelScrollDown      cooldown-ms=150 { focus-workspace-down; }
+    Mod+WheelScrollUp        cooldown-ms=150 { focus-workspace-up; }
+    Mod+WheelScrollRight     { focus-column-right; }
+    Mod+WheelScrollLeft      { focus-column-left; }
+
+    // -------------------------------------------------------- screenshots
+    // niri's own, no external tool involved. Bare Print is interactive:
+    // select a region or press Space to grab the window under the pointer.
+    Print       { screenshot; }
+    Ctrl+Print  { screenshot-screen; }
+    Alt+Print   { screenshot-window; }
+
+    // ------------------------------------------------------------ hardware
+    // allow-when-locked lets these keep working on the lock screen, which is
+    // what you want for volume and brightness.
+    XF86AudioRaiseVolume allow-when-locked=true { spawn "wpctl" "set-volume" "-l" "1.0" "@DEFAULT_AUDIO_SINK@" "5%+"; }
+    XF86AudioLowerVolume allow-when-locked=true { spawn "wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "5%-"; }
+    XF86AudioMute        allow-when-locked=true { spawn "wpctl" "set-mute" "@DEFAULT_AUDIO_SINK@" "toggle"; }
+    XF86AudioMicMute     allow-when-locked=true { spawn "wpctl" "set-mute" "@DEFAULT_AUDIO_SOURCE@" "toggle"; }
+
+    XF86MonBrightnessUp   allow-when-locked=true { spawn "brightnessctl" "set" "5%+"; }
+    XF86MonBrightnessDown allow-when-locked=true { spawn "brightnessctl" "set" "5%-"; }
+
+    XF86AudioPlay allow-when-locked=true { spawn "playerctl" "play-pause"; }
+    XF86AudioNext allow-when-locked=true { spawn "playerctl" "next"; }
+    XF86AudioPrev allow-when-locked=true { spawn "playerctl" "previous"; }
+
+    // -------------------------------------------------------------- system
+    Mod+Shift+E { quit; }
+    Mod+Shift+P { power-off-monitors; }
+}
