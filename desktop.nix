@@ -49,7 +49,7 @@ let
   # read-only and not on any search path that matters, so the theme is passed
   # as flags instead. Colours are RRGGBB with no leading '#', which is
   # swaylock's format, and 00000000 is fully transparent. The font is Tamzen
-  # at a fixed 16px, its 8x16 strike: without --font-size swaylock sizes the
+  # at a fixed 15px, its 8x15 strike: without --font-size swaylock sizes the
   # text from the indicator radius, which would scale the bitmap.
   #
   # Only swayidle invokes this: `loginctl lock-session` raises logind's Lock
@@ -78,7 +78,7 @@ let
       --indicator-radius 90 \
       --indicator-thickness 8 \
       --font "Tamzen" \
-      --font-size 16
+      --font-size 15
   '';
 
   # --------------------------------------------------------- waybar config
@@ -123,10 +123,10 @@ let
       separate-outputs = true;
     };
 
-    # %d-%m and 24h, matching the tmux status bar's own date and clock.
-    # LC_TIME is it_IT, so %a comes out in Italian.
+    # %d-%m and 24h, matching the tmux status bar's own date and clock. No
+    # weekday: the calendar tooltip shows it when needed.
     clock = {
-      format = "{:%a %d-%m  %H:%M}";
+      format = "{:%d-%m  %H:%M}";
       format-alt = "{:%Y-%m-%d %H:%M:%S}";
       tooltip-format = "<tt>{calendar}</tt>";
       calendar = {
@@ -353,11 +353,12 @@ in
 
   # ------------------------------------------------------------- automount
   # GNOME mounted USB sticks through gvfs without being asked; udiskie is the
-  # standalone equivalent and also provides the tray menu to unmount them.
+  # standalone equivalent. No tray icon (--no-tray): it still automounts and
+  # notifies, and unmounting is `udiskie-umount <path>` or yazi.
   systemd.user.services.udiskie = sessionService // {
     description = "Removable disk automounter";
     serviceConfig = {
-      ExecStart = "${pkgs.udiskie}/bin/udiskie --tray --appindicator --no-config";
+      ExecStart = "${pkgs.udiskie}/bin/udiskie --no-tray --no-config";
       Restart = "on-failure";
     };
   };
@@ -494,7 +495,7 @@ in
     brightnessctl # XF86MonBrightness keys
     playerctl # XF86Audio play/next/prev
     wiremix # TUI mixer, replaces pavucontrol
-    udiskie # automount + tray
+    udiskie # automount; udiskie-umount to unmount
     yazi # TUI file manager, replaces Nautilus for everyday use
     wlsunset # night light
     xwayland-satellite # XWayland for Steam, see the unit above

@@ -206,12 +206,12 @@ in
     package = footWrapped;
     settings = {
       main = {
-        # Tamzen's 8x16 strike, as in alacritty.toml (size = 12 there is the
-        # same 16 px). pixelsize rather than size: a bitmap is only sharp at
+        # Tamzen's 8x15 strike, as in alacritty.toml (size = 11.25 there is the
+        # same 15 px). pixelsize rather than size: a bitmap is only sharp at
         # the sizes it was drawn at, and pixelsize is not run through DPI
         # scaling, so it names the strike exactly. Bold comes from Tamzen's
         # own Bold strike; there is no italic, so italic text stays upright.
-        font = "Tamzen:pixelsize=16";
+        font = "Tamzen:pixelsize=15";
 
         # Alacritty's draw_bold_text_with_bright_colors: bold regular colours
         # switch to their bright palette entry. That only changes black here,
