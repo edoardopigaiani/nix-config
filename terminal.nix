@@ -42,6 +42,19 @@ let
         --set FREETYPE_PROPERTIES "cff:no-stem-darkening=0"
     '';
   };
+
+  # Tamzen with exact advance widths in its OTB files, which Pango (waybar,
+  # mako) otherwise spaces 1 px too wide; tamzen-otb-advance.py has the why.
+  # postFixup rather than postInstall: the package's own installPhase does
+  # not run the install hooks. Only the OTBs change; the PCFs are untouched.
+  tamzenFixed = pkgs.tamzen.overrideAttrs (old: {
+    nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [
+      (pkgs.python3.withPackages (ps: [ ps.fonttools ]))
+    ];
+    postFixup = (old.postFixup or "") + ''
+      python3 ${./tamzen-otb-advance.py} "$out"/share/fonts/misc/*.otb
+    '';
+  });
 in
 {
   # ---------------------------------------------------------------- fish
@@ -351,9 +364,10 @@ in
   fonts.packages = with pkgs; [
     # Family names matter here, because alacritty.toml selects by family and
     # style, and one package can register several families.
-    tamzen # "Tamzen", the font of Alacritty, foot and waybar: bitmap, Regular
-    # and Bold at 9 and 12-16 and 20px, as both PCF and OTB (the only bitmap
-    # format Pango, and so waybar, still loads). Also registers
+    tamzenFixed # "Tamzen", the font of Alacritty, foot, waybar, fuzzel, mako
+    # and swaylock: bitmap, Regular and Bold at 9 and 12-16 and 20px, as both
+    # PCF and OTB (the only bitmap format Pango, and so waybar, still loads).
+    # The OTB advances are corrected, see tamzenFixed above. Also registers
     # "TamzenForPowerline", not in use.
     cozette # "Cozette", the Alacritty font before that: bitmap, 13px
     # ("Medium") and 26px ("HiDpi") only, no bold. Also registers the scalable
