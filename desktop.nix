@@ -58,8 +58,14 @@ let
   # signal, swayidle's `lock` event catches it, and Mod+Shift+L in niri.kdl
   # calls loginctl. One definition covers the manual lock, the idle lock and
   # the lock before suspend.
-  lockCommand = ''
-    ${pkgs.swaylock}/bin/swaylock -f \
+  #
+  # A script rather than a bare command string, so swayidle's ExecStart gets a
+  # single store path. The string version ended in a newline, which put the
+  # closing quote of each '...' argument on a line without a backslash; systemd
+  # then rejected the unit for "Unbalanced quoting" and swayidle never ran --
+  # no idle lock, no lock before suspend, and Mod+Shift+L did nothing.
+  lockCommand = pkgs.writeShellScript "lock-screen" ''
+    exec ${pkgs.swaylock}/bin/swaylock -f \
       --color 000000 \
       --inside-color 161819 \
       --inside-clear-color 161819 \
