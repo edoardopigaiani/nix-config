@@ -95,6 +95,8 @@ map("n", "<leader>b", function() Snacks.picker.buffers() end, { desc = "Buffers"
 map("n", "<leader>fr", function() Snacks.picker.recent() end, { desc = "Recent files" })
 map("n", "<leader>fh", function() Snacks.picker.help() end, { desc = "Help pages" })
 map("n", "<leader>fd", function() Snacks.picker.diagnostics() end, { desc = "Diagnostics" })
+-- The file tree, as a sidebar on the left like VS Code's explorer.
+map("n", "<leader>e", function() Snacks.explorer() end, { desc = "File explorer" })
 
 -- --------------------------------------------------------------- gitsigns
 -- Changed lines in the sign column, in the colorscheme's Added/Changed/Removed.

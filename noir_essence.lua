@@ -20,6 +20,7 @@ local c = {
   yellow = "#e7b24e", -- types, classes, namespaces, builtin variables
   string = "#98c379", -- strings
   green = "#a9b665", -- cursor, whitespace, suggest-widget matches
+  term_green = "#89b482", -- terminal.ansiGreen
   blue = "#7daea3", -- operators, builtin functions, escapes
   func = "#7d97ae", -- function names
   purple = "#d3869b", -- keywords, storage
@@ -236,6 +237,33 @@ local groups = {
   LspInlayHint = { fg = c.comment },
   LspCodeLens = { fg = "#999999" }, -- editorCodeLens.foreground
   LspSignatureActiveParameter = { fg = c.green, bold = true },
+
+  -- ---------------------------------------------------------------- snacks
+  -- The picker and its explorer sidebar. Every picker window links back to
+  -- SnacksPicker, which snacks would otherwise point at NormalFloat (the
+  -- #161819 widget grey); here it is the terminal's black, so the explorer
+  -- reads as part of the editor. Colours are the terminal's ANSI palette.
+  SnacksPicker = { fg = c.fg, bg = c.bg },
+  SnacksPickerBorder = { fg = c.bright_black, bg = c.bg },
+  SnacksPickerTitle = { fg = c.fg, bg = c.bg, bold = true },
+  SnacksPickerListCursorLine = { bg = c.selection }, -- the terminal selection
+  SnacksPickerPrompt = { fg = c.blue },
+  SnacksPickerMatch = { fg = c.orange, bold = true }, -- like search matches
+  SnacksPickerDirectory = { fg = c.blue },
+  SnacksPickerFile = { fg = c.fg },
+  SnacksPickerDir = { fg = c.comment }, -- the dirname part of a path
+  SnacksPickerTree = { fg = c.bright_black },
+  SnacksPickerPathHidden = { fg = c.comment },
+  SnacksPickerPathIgnored = { fg = c.comment },
+  SnacksPickerSelected = { fg = c.term_green },
+  SnacksPickerGitStatus = { fg = c.blue },
+  SnacksPickerGitStatusAdded = { fg = c.term_green },
+  SnacksPickerGitStatusModified = { fg = c.orange },
+  SnacksPickerGitStatusDeleted = { fg = c.red },
+  SnacksPickerGitStatusUntracked = { fg = c.green },
+  SnacksPickerGitStatusIgnored = { fg = c.comment },
+  SnacksPickerGitStatusUnmerged = { fg = c.purple },
+  SnacksPickerGitStatusStaged = { fg = c.blue },
 }
 
 for name, spec in pairs(groups) do
@@ -246,8 +274,8 @@ end
 -- rather than with Alacritty's palette. They copy alacritty.toml's [colors]
 -- exactly, including color0 set to the background colour.
 local ansi = {
-  c.bg, c.red, "#89b482", c.orange, c.blue, c.purple, c.green, c.fg,
-  c.bright_black, c.red, "#89b482", c.orange, c.blue, c.purple, c.green, c.fg,
+  c.bg, c.red, c.term_green, c.orange, c.blue, c.purple, c.green, c.fg,
+  c.bright_black, c.red, c.term_green, c.orange, c.blue, c.purple, c.green, c.fg,
 }
 for i, color in ipairs(ansi) do
   vim.g["terminal_color_" .. (i - 1)] = color
