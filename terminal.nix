@@ -183,9 +183,15 @@ in
 
       setw -g window-status-bell-style 'fg=colour255 bg=colour4 bold'
 
-      # Two-row status bar: row 0 is blank, row 1 mirrors the real format.
+      # Two-row status bar: row 0 is a blank spacer, row 1 mirrors the real
+      # format. status-format is reset first, so the copy reads tmux's default
+      # even on a reload (prefix r): otherwise row 0 is already blank from the
+      # previous load and row 1 copies the empty string, leaving the whole bar
+      # empty. The spacer is filled with colour0, the terminal background, so
+      # only the real row shows status-style's grey.
+      set -gu status-format
       set -Fg 'status-format[1]' '#{status-format[0]}'
-      set -g 'status-format[0]' ${"''"}
+      set -g 'status-format[0]' '#[fill=colour0]'
       set -g status 2
 
       # messages
