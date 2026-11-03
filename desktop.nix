@@ -37,6 +37,20 @@
 let
   foot = "${config.programs.foot.package}/bin/foot";
 
+  # Night light on/off, bound to a click on waybar's clock. Stopping the unit
+  # rather than signalling it: SIGUSR1 cycles wlsunset through forced-day,
+  # forced-night and automatic, while this is a plain switch. When wlsunset
+  # exits, niri restores the default gamma. The unit is still started with
+  # the session, so every login begins with the night light on.
+  toggleNightLight = pkgs.writeShellScript "toggle-night-light" ''
+    systemctl=${config.systemd.package}/bin/systemctl
+    if "$systemctl" --user is-active --quiet wlsunset.service; then
+      exec "$systemctl" --user stop wlsunset.service
+    else
+      exec "$systemctl" --user start wlsunset.service
+    fi
+  '';
+
   # ----------------------------------------------------------- niri config
   # The KDL is checked at build time, so a typo fails `nh os switch` with the
   # parse error instead of handing you a compositor that will not start. niri
@@ -140,9 +154,13 @@ let
 
     # %d-%m and 24h, matching the tmux status bar's own date and clock. No
     # weekday: the calendar tooltip shows it when needed.
+    #
+    # A left click toggles the night light (wlsunset). There is deliberately
+    # no format-alt: waybar switched to it on the same click, whatever
+    # format-alt-click said, so the clock has a single format.
     clock = {
       format = "{:%d-%m  %H:%M}";
-      format-alt = "{:%Y-%m-%d %H:%M:%S}";
+      on-click = "${toggleNightLight}";
       tooltip-format = "<tt>{calendar}</tt>";
       calendar = {
         mode = "month";
@@ -399,7 +417,8 @@ in
 
   # ------------------------------------------------------- night light
   # GNOME's Night Light. Rome's coordinates; wlsunset computes the times from
-  # them rather than taking fixed hours.
+  # them rather than taking fixed hours. A left click on waybar's clock turns
+  # it off or back on for the session (toggleNightLight above).
   systemd.user.services.wlsunset = sessionService // {
     description = "Day/night gamma adjustment";
     serviceConfig = {
