@@ -512,8 +512,10 @@ in
         gtk-theme = "adw-gtk3-dark";
         icon-theme = "Adwaita";
         cursor-theme = "Adwaita";
-        font-name = "Cantarell 11";
-        # GNOME 48's own default, part of the Adwaita font family.
+        # Both are the schema defaults of gsettings-desktop-schemas (GNOME 48
+        # and later), spelled out so settings.ini below can match them and so
+        # they survive GNOME's removal in phase 3.
+        font-name = "Adwaita Sans 11";
         monospace-font-name = "Adwaita Mono 11";
       };
     }
@@ -527,7 +529,7 @@ in
     gtk-icon-theme-name=Adwaita
     gtk-cursor-theme-name=Adwaita
     gtk-cursor-theme-size=24
-    gtk-font-name=Cantarell 11
+    gtk-font-name=Adwaita Sans 11
     gtk-application-prefer-dark-theme=1
   '';
 
@@ -540,12 +542,11 @@ in
   };
 
   # ---------------------------------------------------------------- fonts
-  # GNOME brought Cantarell and the Noto families along with it; nothing else
+  # GNOME brought the Adwaita and Noto families along with it; nothing else
   # depends on them, so they have to be declared before GNOME can be removed.
   # The terminal fonts stay in terminal.nix.
   fonts.packages = with pkgs; [
-    cantarell-fonts # the UI font the gsettings above name
-    adwaita-fonts # Adwaita Mono, the monospace font the gsettings above name
+    adwaita-fonts # Adwaita Sans and Mono, the fonts the gsettings above name
     noto-fonts # broad coverage for anything the UI font lacks
     noto-fonts-color-emoji # emoji in Telegram and web pages
   ];
