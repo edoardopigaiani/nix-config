@@ -162,9 +162,12 @@ in
       set -g pane-active-border-style 'bg=colour0 fg=colour8'
 
       # bar
+      # colour235 is weechat's title/status bar grey (#262626), which
+      # noir_essence.lua also uses for Neovim's statusline; only the
+      # background changed, the foreground colours are as they were.
       set -g status-position bottom
       set -g status-justify centre
-      set -g status-style 'bg=colour0 fg=colour7'
+      set -g status-style 'bg=colour235 fg=colour7'
       set -g status-left '%d#[fg=colour4]-#[fg=colour7]%m'
       # #{battery_status_bg} was dropped by tmux-battery and already rendered
       # empty on Fedora, so it is left out here.
@@ -172,10 +175,10 @@ in
       set -g status-right-length 50
       set -g status-left-length 18
 
-      setw -g window-status-current-style 'fg=colour7 bg=colour0'
+      setw -g window-status-current-style 'fg=colour7 bg=colour235'
       setw -g window-status-current-format '#[fg=colour4]> #[fg=colour7]#W#[fg=colour7]'
 
-      setw -g window-status-style 'fg=colour7 bg=colour0'
+      setw -g window-status-style 'fg=colour7 bg=colour235'
       setw -g window-status-format '#[fg=colour8]> #[fg=colour7]#W#[fg=colour7]'
 
       setw -g window-status-bell-style 'fg=colour255 bg=colour4 bold'

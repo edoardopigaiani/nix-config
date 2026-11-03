@@ -41,6 +41,7 @@ local c = {
   indent = "#1b1b1a", -- editorIndentGuide.background #f7f3ea1c
   dim = "#3e3d3b", -- tab.inactiveForeground #f7f3ea40
   status = "#908e89", -- statusBar.foreground #f7f3ea95
+  bar = "#262626", -- xterm-256 colour 235, weechat's title and status bars
   find_other = "#4d2e1a", -- editor.findMatchHighlightBackground #e78a4e55
   word_hl = "#3f3f3f", -- editor.wordHighlightBackground #575757b8
   word_hl_strong = "#363938", -- editor.wordHighlightStrongBackground #4b4f4eb8
@@ -89,9 +90,12 @@ local groups = {
   PmenuThumb = { bg = c.bright_black },
   WildMenu = { link = "PmenuSel" },
 
-  -- The VS Code status bar and tabs share the editor background.
-  StatusLine = { fg = c.status },
-  StatusLineNC = { fg = c.dim },
+  -- Tabs share the editor background, as in VS Code. The statusline instead
+  -- matches weechat's bars (colour 235 with white text), so the two terminal
+  -- apps share one look. Inactive windows keep the same bar with greyer text,
+  -- as weechat does with color_bg_inactive.
+  StatusLine = { fg = c.fg, bg = c.bar },
+  StatusLineNC = { fg = c.status, bg = c.bar },
   TabLine = { fg = c.dim },
   TabLineSel = { fg = c.fg },
   TabLineFill = {},
