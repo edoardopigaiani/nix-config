@@ -80,12 +80,29 @@ map("t", "<M-l>", [[<C-\><C-n><C-w>l]], { desc = "Window right" })
 -- ------------------------------------------------------------------ snacks
 -- snacks.nvim is already here as claudecode.nvim's terminal; its picker also
 -- takes over vim.ui.select. File icons are off: there is no icon plugin, and
--- the Nerd Font glyphs would have to fall back from Tamzen to Cozette.
+-- the Nerd Font glyphs would have to fall back from Tamzen to Cozette. The
+-- diagnostic and git markers are plain letters for the same reason: the
+-- diagnostics match Neovim's own sign column (E/W/I/H), the git ones follow
+-- `git status --short`.
 require("snacks").setup({
   picker = {
     enabled = true,
     prompt = "> ",
-    icons = { files = { enabled = false } },
+    icons = {
+      files = { enabled = false },
+      diagnostics = { Error = "E ", Warn = "W ", Info = "I ", Hint = "H " },
+      git = {
+        commit = "* ", -- used by the git log picker
+        staged = "S", -- overrides the other git letters
+        added = "A",
+        deleted = "D",
+        ignored = "! ",
+        modified = "M",
+        renamed = "R",
+        unmerged = "U ",
+        untracked = "?",
+      },
+    },
   },
 })
 
