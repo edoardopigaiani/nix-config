@@ -36,16 +36,13 @@ input {
         // cursor. GNOME had this on by default.
         dwt
         // Maximum pointer speed: libinput's accel-speed runs -1.0..1.0.
-        // configuration.nix sets the same in GNOME's dconf for the fallback.
         accel-speed 1.0
     }
 
     trackpoint {
-        // The direct translation of the dconf hack this replaces:
-        // org/gnome/desktop/peripherals/pointingstick speed = 1.0. GNOME's
-        // "speed" is libinput's accel-speed, same -1.0..1.0 scale, so the
-        // value carries over unchanged. Once GNOME is removed in phase 3 the
-        // dconf block in configuration.nix can go with it.
+        // The X395 trackpoint is an Elantech device, so hardware.trackpoint's
+        // sysfs knobs do not exist for it; libinput's accel-speed is the only
+        // way to speed it up. Same value GNOME's pointingstick "speed" had.
         accel-speed 1.0
     }
 

@@ -2,15 +2,14 @@
 # Import it from configuration.nix:
 #   imports = [ ./hardware-configuration.nix ./terminal.nix ./nix-builds.nix ./desktop.nix ];
 #
-# Migration state: phases 1 and 2 are done. niri is the default session and
-# tuigreet has replaced GDM, but GNOME is still installed and still listed by
-# the greeter (F3), so it remains one logout away. Phase 3 -- removing GNOME,
-# gnome-tweaks and the dconf trackpoint workaround, and swapping
-# power-profiles-daemon for tlp -- is deliberately not done here; it is the
-# step that is hard to walk back, and nothing forces it.
+# Migration state: all three phases are done. niri is the only session,
+# tuigreet replaced GDM (phase 2), and phase 3 removed GNOME itself, together
+# with gnome-tweaks and the dconf trackpoint workaround, and swapped
+# power-profiles-daemon for tlp. What GNOME used to provide and the session
+# still needs is declared below, under "after GNOME".
 #
-# The two phases are separate commits. Reverting the phase 2 commit alone
-# gives GDM back without touching anything else.
+# Each phase is its own commit. The boot menu still holds the generations
+# from before phase 3, which boot straight into a system with GNOME.
 #
 # Design rules followed throughout, both inherited from terminal.nix:
 #
@@ -273,10 +272,8 @@ in
   systemd.user.services.xwayland-satellite = sessionService;
 
   # --------------------------------------------------------------- greetd
-  # Migration phase 2: GDM is off (configuration.nix) and the login screen is
-  # tuigreet on VT1. GNOME is still installed and still selectable -- the
-  # --sessions path below is the same directory GDM read, holding both
-  # gnome.desktop and niri.desktop -- so the fallback survives this phase.
+  # Migration phase 2: GDM is gone and the login screen is tuigreet on VT1.
+  # Since phase 3 the --sessions path below holds only niri.desktop.
   #
   # Most of the wiring comes from the module and is deliberately not repeated
   # here: it aliases greetd to display-manager.service, sets
@@ -301,8 +298,8 @@ in
       # first time.
       "--remember"
       "--remember-user-session"
-      # The session list, which is what keeps GNOME reachable. Same derivation
-      # the display-manager module builds for any greeter.
+      # The session list, the same derivation the display-manager module
+      # builds for any greeter. Only niri is in it now.
       "--sessions ${config.services.displayManager.sessionData.desktops}/share/wayland-sessions"
       # Used only until --remember-user-session has something stored.
       "--cmd niri-session"
@@ -427,13 +424,26 @@ in
     };
   };
 
-  # ------------------------------------------------- services GNOME implied
-  # All four are already on today because the GNOME module pulls them in.
-  # Declaring them here is what keeps them once GNOME goes away in phase 3,
-  # and documents that the session needs them.
+  # ------------------------------------------------------------ after GNOME
+  # The GNOME module used to turn all of these on; phase 3 removed it, so
+  # they are declared here. Found by evaluating this config with and without
+  # services.desktopManager.gnome and comparing the result.
   services.udisks2.enable = true; # the mount backend udiskie drives
   services.gvfs.enable = true; # trash:// and network mounts for yazi/Nautilus
   services.upower.enable = true; # the battery data waybar reads
+  # libinput's udev rules (touchpad fuzz overrides, device groups). niri
+  # links libinput itself, but nothing else installs the rules.
+  services.libinput.enable = true;
+  services.gnome.glib-networking.enable = true; # TLS for GIO, so GTK apps can open https
+  services.gnome.at-spi2-core.enable = true; # the accessibility bus GTK apps look for at startup
+  # mDNS: how cups-browsed and system-config-printer find network printers.
+  services.avahi.enable = true;
+  programs.system-config-printer.enable = true; # printer setup, ex GNOME Settings panel
+  programs.gnome-disks.enable = true; # GNOME Disks: format, ISO images, SMART
+  programs.seahorse.enable = true; # browse the keyring; also SSH_ASKPASS
+  services.gnome.sushi.enable = true; # Nautilus' space-bar quick preview
+  # The GNOME module also made Nautilus the handler for folders.
+  xdg.mime.defaultApplications."inode/directory" = "org.gnome.Nautilus.desktop";
 
   # ------------------------------------------------------------- bluetooth
   # Set explicitly: today GNOME's module turns it on with mkDefault, and phase 3
@@ -448,45 +458,35 @@ in
   };
   services.gnome.gnome-keyring.enable = true; # VSCode and GitHub Desktop secrets
 
-  # power-profiles-daemon stays, and tlp is deliberately NOT enabled yet:
-  # NixOS asserts that the two conflict, and ppd is currently on because the
-  # GNOME module turns it on. Switching to tlp would break GNOME's power
-  # panel, and GNOME is the fallback this whole phase exists to preserve.
-  # Phase 3 is where ppd comes out and tlp goes in; `powerprofilesctl` works
-  # from the command line under niri in the meantime.
-
-  # --------------------------------------------------- GNOME leftovers
-  # niri runs XDG autostart entries (the niri module sets
-  # runXdgAutostartIfNone, and niri.service Wants xdg-desktop-autostart.target),
-  # so every autostart file GNOME dragged in gets evaluated in this session
-  # too. Most are gated by OnlyShowIn=GNOME and stay put. ibus is the one that
-  # is not -- and the gate is inverted:
-  #
-  #   ibus-daemon.desktop: NotShowIn=GNOME;KDE;
-  #
-  # The entry exists *for* sessions like this one, and GNOME is what installed
-  # it, via services.desktopManager.gnome -> core-os-services:
-  #   i18n.inputMethod.enable = mkDefault true;
-  #   i18n.inputMethod.type   = mkDefault "ibus";
-  # which is why it never appeared under GNOME and greets you with a
-  # notification on every niri login.
-  #
-  # Measured in a running niri session: 7 ibus processes, 215 MiB RSS, for an
-  # input method an Italian keyboard layout never invokes. The entire GNOME
-  # session this migration replaces was 439 MiB, so leaving it on would hand
-  # back half of what the move buys. mkDefault above means plain false wins.
-  i18n.inputMethod.enable = false;
-
-  # Two more things to know before phase 3, both from that same GNOME block:
-  #
-  #   - hardware.bluetooth.enable is mkDefault true there, so removing GNOME
-  #     would silently turn Bluetooth off. It is now set explicitly (see
-  #     "bluetooth" above), so this one is already handled.
-  #
-  #   - evolution-alarm-notify's autostart entry has no OnlyShowIn at all, so
-  #     it is eligible here. It is not running in practice (nothing to alarm
-  #     about with no calendars configured), which is why it is left alone
-  #     rather than masked; it disappears with evolution in phase 3.
+  # ------------------------------------------------------------------ power
+  # tlp instead of power-profiles-daemon, which GNOME brought and which had
+  # nothing to drive here: the Ryzen 3 PRO 3300U (Zen+) runs acpi-cpufreq,
+  # with neither amd-pstate EPP nor ACPI platform_profile, so every ppd
+  # profile used its "placeholder" driver. tlp tunes what this machine does
+  # have -- CPU boost, PCIe/USB/Wi-Fi/NVMe power saving, amdgpu -- switching
+  # by itself between AC and battery, and sets the ThinkPad charge thresholds.
+  # The rest of its settings stay at tlp's defaults (`sudo tlp-stat` shows
+  # them). If a USB device lags after being idle, exclude it from autosuspend
+  # with USB_DENYLIST.
+  services.tlp = {
+    enable = true;
+    settings = {
+      # Charge only below 75% and stop at 80%: a battery kept full wears out
+      # much faster, and this laptop is mostly on its charger. For one full
+      # charge before a trip: `sudo tlp fullcharge BAT0`.
+      START_CHARG_THRESH_BAT0 = 75;
+      STOP_CHARG_THRESH_BAT0 = 80;
+      # No turbo on battery: less heat and power, little difference for
+      # everyday use.
+      CPU_BOOST_ON_AC = 1;
+      CPU_BOOST_ON_BAT = 0;
+      # Keep the Bluetooth adapter out of USB autosuspend: waking it is the
+      # usual cause of headphones dropping and mice lagging. The radios are
+      # otherwise left alone -- no DEVICES_TO_DISABLE_* -- so Wi-Fi and
+      # Bluetooth are never switched off by tlp.
+      USB_EXCLUDE_BTUSB = 1;
+    };
+  };
 
   # ------------------------------------------------------------- brightness
   # brightnessctl's udev rules chgrp the backlight sysfs node to "video" and
@@ -502,9 +502,7 @@ in
   # ------------------------------------------------------------- theming
   # GTK4/libadwaita apps read the colour scheme from the portal, which serves
   # it from these gsettings -- so this one block themes both the GTK3 apps
-  # (via the settings.ini below) and the GTK4 ones, and keeps working under
-  # GNOME. It appends to the dconf database configuration.nix already defines
-  # for the trackpoint.
+  # (via the settings.ini below) and the GTK4 ones.
   programs.dconf.profiles.user.databases = [
     {
       settings."org/gnome/desktop/interface" = {
@@ -512,10 +510,10 @@ in
         gtk-theme = "adw-gtk3-dark";
         icon-theme = "Adwaita";
         cursor-theme = "Adwaita";
-        # Both are the schema defaults of gsettings-desktop-schemas (GNOME 48
-        # and later), spelled out so settings.ini below can match them and so
-        # they survive GNOME's removal in phase 3.
-        font-name = "Adwaita Sans 11";
+        # The schema defaults of gsettings-desktop-schemas (GNOME 48 and
+        # later) are Adwaita Sans 11 and Adwaita Mono 11; the UI font is one
+        # point smaller here. Spelled out so settings.ini below can match.
+        font-name = "Adwaita Sans 10";
         monospace-font-name = "Adwaita Mono 11";
       };
     }
@@ -529,7 +527,7 @@ in
     gtk-icon-theme-name=Adwaita
     gtk-cursor-theme-name=Adwaita
     gtk-cursor-theme-size=24
-    gtk-font-name=Adwaita Sans 11
+    gtk-font-name=Adwaita Sans 10
     gtk-application-prefer-dark-theme=1
   '';
 
@@ -542,9 +540,9 @@ in
   };
 
   # ---------------------------------------------------------------- fonts
-  # GNOME brought the Adwaita and Noto families along with it; nothing else
-  # depends on them, so they have to be declared before GNOME can be removed.
-  # The terminal fonts stay in terminal.nix.
+  # GNOME used to bring the Adwaita and Noto families along; nothing else
+  # depends on them, so they are declared here. The terminal fonts stay in
+  # terminal.nix.
   fonts.packages = with pkgs; [
     adwaita-fonts # Adwaita Sans and Mono, the fonts the gsettings above name
     noto-fonts # broad coverage for anything the UI font lacks
@@ -558,6 +556,8 @@ in
     swaylock # lock screen, themed in lockCommand above
     swayidle # idle timeouts, see the unit above
     adw-gtk3 # the adw-gtk3-dark theme the gsettings name
+    adwaita-icon-theme # the icon and cursor theme the gsettings and niri.kdl name
+    glib # gsettings and gio
     brightnessctl # XF86MonBrightness keys
     playerctl # XF86Audio play/next/prev
     wiremix # TUI mixer, replaces pavucontrol
@@ -567,5 +567,17 @@ in
     wlsunset # night light
     xwayland-satellite # XWayland for Steam, see the unit above
     wl-clipboard # already in terminal.nix for tmux; listed as a session dep
+
+    # The GNOME apps kept after phase 3; Disks, Seahorse and the printer
+    # tool come from their program modules above.
+    nautilus # file manager; yazi stays the everyday one
+    papers # PDF viewer
+    loupe # image viewer
+    gnome-calculator
+    simple-scan # scanner
+    snapshot # webcam
+    baobab # disk usage
+    glycin-thumbnailer # image thumbnails in Nautilus
+    gst-thumbnailers # audio and video thumbnails in Nautilus
   ];
 }

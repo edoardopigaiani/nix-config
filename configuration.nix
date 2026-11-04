@@ -53,8 +53,9 @@
   boot.loader.systemd-boot.configurationLimit = 30;
 
   # The default 5s is hard to catch with Plymouth covering the handoff, and
-  # the whole point of keeping the GNOME generations around is being able to
-  # pick one. Lower it again once niri is the only session.
+  # the generations from before migration phase 3 -- the last ones with GNOME
+  # -- are the way back if its removal turns out to have broken something.
+  # Lower it again once nh clean has collected them.
   boot.loader.timeout = 15;
 
   # Graphical boot: Plymouth shows the firmware logo and asks for the LUKS
@@ -133,27 +134,9 @@
     LC_TIME = "it_IT.UTF-8";
   };
 
-  # GNOME is kept installed, but no longer runs the login screen: migration
-  # phase 2 replaced GDM with greetd + tuigreet (see desktop.nix). GNOME stays
-  # here as the fallback session -- tuigreet lists it alongside niri under F3 --
-  # and phase 3 is what removes it. gnome-keyring's PAM auto-unlock, which GDM
-  # used to do, is carried over by the greetd module.
-  services.displayManager.gdm.enable = false;
-  services.desktopManager.gnome.enable = true;
-
-  # The X395 trackpoint is an Elantech device, so hardware.trackpoint's sysfs
-  # knobs don't exist for it; set the speed through GNOME instead.
-  programs.dconf.profiles.user.databases = [
-    {
-      settings."org/gnome/desktop/peripherals/pointingstick" = {
-        speed = 1.0; # -1.0 .. 1.0 (default 0.0)
-      };
-      # Touchpad at maximum speed too, matching accel-speed in niri.kdl.
-      settings."org/gnome/desktop/peripherals/touchpad" = {
-        speed = 1.0;
-      };
-    }
-  ];
+  # No desktop environment: the session is niri, with greetd + tuigreet as the
+  # login screen, all in desktop.nix. GNOME was removed in migration phase 3;
+  # the services and apps worth keeping from it are declared there.
 
   # Configure keymap in X11
   services.xserver.xkb = {
@@ -210,7 +193,6 @@
     # login, so point VSCode at it explicitly.
     (vscode.override { commandLineArgs = "--password-store=gnome-libsecret"; })
     claude-code
-    gnome-tweaks
     cryptomator
     vlc
     telegram-desktop
