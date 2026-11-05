@@ -178,6 +178,11 @@ binds {
     // Not Mod+L: that is "focus the column to the right" below, and `niri
     // validate` rejects the duplicate.
     Mod+Shift+L hotkey-overlay-title="Lock the screen" { spawn "loginctl" "lock-session"; }
+    // Night light on/off for this session. Stopping the unit rather than
+    // signalling it: SIGUSR1 cycles wlsunset through forced-day, forced-night
+    // and automatic, while this is a plain switch. When wlsunset exits, niri
+    // restores the default gamma; the unit still starts with every login.
+    Mod+N hotkey-overlay-title="Night light on/off" { spawn "sh" "-c" "systemctl --user is-active --quiet wlsunset.service && systemctl --user stop wlsunset.service || systemctl --user start wlsunset.service"; }
 
     // ------------------------------------------------------------ windows
     Mod+Q repeat=false { close-window; }

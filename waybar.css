@@ -62,7 +62,6 @@ window#waybar {
 #bluetooth,
 #battery,
 #network,
-#clock,
 #idle_inhibitor {
   padding: 0 8px;
   color: @foreground;
@@ -104,15 +103,10 @@ window#waybar.empty #window {
 }
 
 /* ----------------------------------------------------------------- state */
-#clock {
-  color: @foreground;
-}
-
+/* Lime, the green the terminal shows as its cursor and accent (ANSI slot
+ * "cyan" in this theme), in every state that is not a warning -- charging
+ * included. */
 #battery {
-  color: @green;
-}
-
-#battery.charging {
   color: @lime;
 }
 

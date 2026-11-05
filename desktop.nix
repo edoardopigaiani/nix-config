@@ -36,20 +36,6 @@
 let
   foot = "${config.programs.foot.package}/bin/foot";
 
-  # Night light on/off, bound to a click on waybar's clock. Stopping the unit
-  # rather than signalling it: SIGUSR1 cycles wlsunset through forced-day,
-  # forced-night and automatic, while this is a plain switch. When wlsunset
-  # exits, niri restores the default gamma. The unit is still started with
-  # the session, so every login begins with the night light on.
-  toggleNightLight = pkgs.writeShellScript "toggle-night-light" ''
-    systemctl=${config.systemd.package}/bin/systemctl
-    if "$systemctl" --user is-active --quiet wlsunset.service; then
-      exec "$systemctl" --user stop wlsunset.service
-    else
-      exec "$systemctl" --user start wlsunset.service
-    fi
-  '';
-
   # ----------------------------------------------------------- niri config
   # The KDL is checked at build time, so a typo fails `nh os switch` with the
   # parse error instead of handing you a compositor that will not start. niri
@@ -128,7 +114,7 @@ let
       "niri/workspaces"
       "niri/window"
     ];
-    modules-center = [ "clock" ];
+    # No clock: the date and time are in tmux's status bar.
     modules-right = [
       "tray"
       "idle_inhibitor"
@@ -151,22 +137,6 @@ let
       separate-outputs = true;
     };
 
-    # %d-%m and 24h, matching the tmux status bar's own date and clock. No
-    # weekday: the calendar tooltip shows it when needed.
-    #
-    # A left click toggles the night light (wlsunset). There is deliberately
-    # no format-alt: waybar switched to it on the same click, whatever
-    # format-alt-click said, so the clock has a single format.
-    clock = {
-      format = "{:%d-%m  %H:%M}";
-      on-click = "${toggleNightLight}";
-      tooltip-format = "<tt>{calendar}</tt>";
-      calendar = {
-        mode = "month";
-        on-scroll = 1;
-      };
-    };
-
     battery = {
       states = {
         warning = 25;
@@ -182,7 +152,9 @@ let
     # session manager, and the native module reads it without the pulse
     # compatibility layer in between.
     wireplumber = {
-      format = "V: {volume}%";
+      # Bare numbers for volume and brightness; only battery and Wi-Fi signal
+      # carry a %.
+      format = "V: {volume}";
       format-muted = "V: --";
       on-click = "${pkgs.wireplumber}/bin/wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle";
       on-click-right = "${foot} -a wiremix ${pkgs.wiremix}/bin/wiremix";
@@ -190,7 +162,7 @@ let
     };
 
     backlight = {
-      format = "L: {percent}%";
+      format = "L: {percent}";
       scroll-step = 5;
     };
 
@@ -213,10 +185,12 @@ let
     };
 
     network = {
-      format-wifi = "N: {essid} {signalStrength}%";
+      # Signal strength only; the network name is in the tooltip.
+      format-wifi = "N: {signalStrength}%";
       format-ethernet = "N: eth";
       format-disconnected = "N: offline";
       tooltip-format = "{ifname}  {ipaddr}";
+      tooltip-format-wifi = "{essid}  {ifname}  {ipaddr}";
       # nmtui ships with NetworkManager; no applet needed.
       on-click = "${foot} -a nmtui ${pkgs.networkmanager}/bin/nmtui";
     };
@@ -414,8 +388,8 @@ in
 
   # ------------------------------------------------------- night light
   # GNOME's Night Light. Rome's coordinates; wlsunset computes the times from
-  # them rather than taking fixed hours. A left click on waybar's clock turns
-  # it off or back on for the session (toggleNightLight above).
+  # them rather than taking fixed hours. Mod+N in niri.kdl turns it off or
+  # back on for the session.
   systemd.user.services.wlsunset = sessionService // {
     description = "Day/night gamma adjustment";
     serviceConfig = {

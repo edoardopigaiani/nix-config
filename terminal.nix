@@ -115,12 +115,10 @@ in
     escapeTime = 10;
     clock24 = true;
 
-    # Replaces TPM, which cannot write into the read-only Nix store.
-    plugins = [ pkgs.tmuxPlugins.battery ];
-
-    # Must run before the plugins: tmux-battery rewrites the #{battery_*}
-    # placeholders in status-right when it loads.
-    extraConfigBeforePlugins = ''
+    # No plugins (and so no TPM, which could not write into the read-only Nix
+    # store anyway): the battery indicator, the one plugin this used, is
+    # waybar's job now.
+    extraConfig = ''
       set -as terminal-features ",alacritty*:RGB"
       set -as terminal-features ",foot*:RGB"
 
@@ -169,9 +167,7 @@ in
       set -g status-justify centre
       set -g status-style 'bg=colour235 fg=colour7'
       set -g status-left '%d#[fg=colour4]-#[fg=colour7]%m'
-      # #{battery_status_bg} was dropped by tmux-battery and already rendered
-      # empty on Fedora, so it is left out here.
-      set -g status-right ' B#[fg=colour4]:#[fg=colour7] #{battery_percentage} | %H#[fg=colour4]:#[fg=colour7]%M '
+      set -g status-right ' %H#[fg=colour4]:#[fg=colour7]%M '
       set -g status-right-length 50
       set -g status-left-length 18
 
