@@ -462,6 +462,68 @@ in
     };
   };
 
+  # ------------------------------------------------------------------ yazi
+  # The TUI file manager (Mod+E). Through the module rather than a bare
+  # package so its theme lives here -- with one catch: the module wraps yazi
+  # with YAZI_CONFIG_HOME pointing at the generated config, so unlike the
+  # other tools ~/.config/yazi is ignored. Edit this block instead.
+  #
+  # The preset theme draws Nerd Font glyphs, and there is no Nerd Font here
+  # (same reason waybar and the snacks explorer use letters): they came out
+  # as tofu or as another font's fallback. Hence:
+  programs.yazi = {
+    enable = true;
+    settings.theme = {
+      # No file or folder icons at all: every preset rule is a glyph, and
+      # conds holds the generic file/folder fallbacks too. Names keep their
+      # colours.
+      icon = {
+        globs = [ ];
+        dirs = [ ];
+        files = [ ];
+        exts = [ ];
+        conds = [ ];
+      };
+      # The rounded powerline caps around the highlighted entry, the tabs and
+      # the status bar segments; empty leaves plain rectangular blocks.
+      indicator.padding = {
+        open = "";
+        close = "";
+      };
+      tabs = {
+        sep_inner = {
+          open = "";
+          close = "";
+        };
+        sep_outer = {
+          open = "";
+          close = "";
+        };
+      };
+      status = {
+        sep_left = {
+          open = "";
+          close = "";
+        };
+        sep_right = {
+          open = "";
+          close = "";
+        };
+      };
+      # Notification and completion icons, as plain text.
+      notify = {
+        icon_info = "i";
+        icon_warn = "!";
+        icon_error = "E";
+      };
+      cmp = {
+        icon_file = "";
+        icon_folder = "/";
+        icon_command = ">";
+      };
+    };
+  };
+
   # ------------------------------------------------------------- brightness
   # brightnessctl's udev rules chgrp the backlight sysfs node to "video" and
   # the keyboard LED node to "input", then make them group-writable; without
@@ -537,7 +599,6 @@ in
     wiremix # TUI mixer, replaces pavucontrol
     bluetui # TUI Bluetooth manager, replaces the GNOME panel's Bluetooth page
     udiskie # automount; udiskie-umount to unmount
-    yazi # TUI file manager, replaces Nautilus for everyday use
     wlsunset # night light
     xwayland-satellite # XWayland for Steam, see the unit above
     wl-clipboard # already in terminal.nix for tmux; listed as a session dep
