@@ -30,9 +30,10 @@ let
     '';
   };
 
-  # The same wrapper for foot, and inert for the same reason: foot uses the
-  # Tamzen bitmap too. Kept so a switch back to a scalable CFF font, such as
-  # JetBrains Mono's OTF build, renders with stem darkening again.
+  # The same wrapper for foot, where it is not inert: foot uses JetBrains
+  # Mono's OTF build, whose outlines are CFF -- the only kind FreeType applies
+  # stem darkening to. It is the part of the macOS look FreeType does not
+  # give by default; see the font line in programs.foot below.
   footWrapped = pkgs.symlinkJoin {
     name = "foot-${pkgs.foot.version}";
     paths = [ pkgs.foot ];
@@ -43,8 +44,8 @@ let
     '';
   };
 
-  # Tamzen with exact advance widths in its OTB files, which Pango (waybar,
-  # mako) otherwise spaces 1 px too wide; tamzen-otb-advance.py has the why.
+  # Tamzen with exact advance widths in its OTB files, which Pango (waybar and
+  # mako, back when they used Tamzen) otherwise spaces 1 px too wide; tamzen-otb-advance.py has the why.
   # postFixup rather than postInstall: the package's own installPhase does
   # not run the install hooks. Only the OTBs change; the PCFs are untouched.
   tamzenFixed = pkgs.tamzen.overrideAttrs (old: {
@@ -212,7 +213,7 @@ in
   environment.etc."xdg/alacritty/alacritty.toml".source = ./alacritty.toml;
 
   # ------------------------------------------------------------------ foot
-  # A port of alacritty.toml to foot, font included.
+  # A port of alacritty.toml to foot, with JetBrains Mono in place of Tamzen.
   # The module writes /etc/xdg/foot/foot.ini, which ~/.config/foot/foot.ini
   # overrides. Settings equal to foot's defaults are left out: Ctrl+Shift+C/V,
   # Shift+Insert, Ctrl+0/+/-, Ctrl+Shift+N, Shift+PageUp/Down, middle-click
@@ -224,12 +225,29 @@ in
     package = footWrapped;
     settings = {
       main = {
-        # Tamzen's 8x15 strike, as in alacritty.toml (size = 11.25 there is the
-        # same 15 px). pixelsize rather than size: a bitmap is only sharp at
-        # the sizes it was drawn at, and pixelsize is not run through DPI
-        # scaling, so it names the strike exactly. Bold comes from Tamzen's
-        # own Bold strike; there is no italic, so italic text stays upright.
-        font = "Tamzen:pixelsize=15";
+        # JetBrains Mono at 9 pt, which foot turns into 12 px (it converts
+        # points at 96 DPI, scaled by the output's scale of 1): a cell of
+        # 7.2 x 15.8 px (line height 1.32 em), cap height 8.8 px. 10 pt was
+        # the size closest to the Tamzen 8x15 strike foot used before, but
+        # two zoom-outs (Ctrl+-, 0.5 pt each) read better, so 9 it is.
+        #
+        # Rendering as close to macOS as FreeType gets:
+        #   - fontformat=CFF pins the OTF build over the TTF one installed
+        #     alongside: stem darkening, set by footWrapped above, only
+        #     applies to CFF outlines. It thickens the strokes at small sizes
+        #     the way macOS's font smoothing does.
+        #   - antialias with rgba=none: greyscale antialiasing and no subpixel
+        #     colour fringes, which is what macOS has done since Mojave.
+        #   - hintstyle=hintslight: vertical-only hinting through the CFF
+        #     driver, which keeps glyph shapes as drawn. macOS does not hint
+        #     at all, but FreeType's stem darkening runs inside that light
+        #     hinting mode, so hintnone would drop the darkening too.
+        # Bold and italic come from JetBrains Mono's own Bold and Italic faces
+        # and inherit these settings from the primary font.
+        font = "JetBrains Mono:size=9:fontformat=CFF:antialias=true:rgba=none:hintstyle=hintslight";
+        # Linear (gamma-correct) blending makes light text on a dark
+        # background thinner; macOS blends in a way that keeps it fuller.
+        gamma-correct-blending = "no";
 
         # Alacritty's draw_bold_text_with_bright_colors: bold regular colours
         # switch to their bright palette entry. That only changes black here,
@@ -369,16 +387,16 @@ in
   fonts.packages = with pkgs; [
     # Family names matter here, because alacritty.toml selects by family and
     # style, and one package can register several families.
-    tamzenFixed # "Tamzen", the font of Alacritty, foot, waybar, fuzzel, mako
-    # and swaylock: bitmap, Regular and Bold at 9 and 12-16 and 20px, as both
-    # PCF and OTB (the only bitmap format Pango, and so waybar, still loads).
+    tamzenFixed # "Tamzen", the font of Alacritty and fuzzel: bitmap,
+    # Regular and Bold at 9 and 12-16 and 20px, as both PCF and OTB (the only
+    # bitmap format Pango still loads).
     # The OTB advances are corrected, see tamzenFixed above. Also registers
     # "TamzenForPowerline", not in use.
     cozette # "Cozette", the Alacritty font before that: bitmap, 13px
     # ("Medium") and 26px ("HiDpi") only, no bold. Also registers the scalable
     # "CozetteVector", which is a different family and is not in use.
-    jetbrains-mono # "JetBrains Mono", a previous Alacritty and foot font,
-    # kept as a scalable option. Ships both OTF (CFF) and TTF builds. Has no
+    jetbrains-mono # "JetBrains Mono", the font of foot, waybar, mako and
+    # swaylock (and a previous Alacritty one). Ships both OTF (CFF) and TTF builds; foot pins the OTF one. Has no
     # braille or check marks, so those fall back.
     terminus_font_ttf # "Terminus (TTF)", the Alacritty font before that
     terminus_font # Terminus bitmap (PCF/OTB) variants, 12px to 32px

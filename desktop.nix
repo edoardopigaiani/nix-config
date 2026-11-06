@@ -49,9 +49,10 @@ let
   # swaylock's own config file lives under its Nix store prefix, which is
   # read-only and not on any search path that matters, so the theme is passed
   # as flags instead. Colours are RRGGBB with no leading '#', which is
-  # swaylock's format, and 00000000 is fully transparent. The font is Tamzen
-  # at a fixed 15px, its 8x15 strike: without --font-size swaylock sizes the
-  # text from the indicator radius, which would scale the bitmap.
+  # swaylock's format, and 00000000 is fully transparent. The font is
+  # JetBrains Mono at 12px, as in foot, waybar and mako; without --font-size
+  # swaylock sizes the text from the indicator radius. FREETYPE_PROPERTIES
+  # turns on stem darkening, as footWrapped does for foot.
   #
   # Only swayidle invokes this: `loginctl lock-session` raises logind's Lock
   # signal, swayidle's `lock` event catches it, and Mod+Shift+L in niri.kdl
@@ -64,6 +65,7 @@ let
   # then rejected the unit for "Unbalanced quoting" and swayidle never ran --
   # no idle lock, no lock before suspend, and Mod+Shift+L did nothing.
   lockCommand = pkgs.writeShellScript "lock-screen" ''
+    export FREETYPE_PROPERTIES="cff:no-stem-darkening=0"
     exec ${pkgs.swaylock}/bin/swaylock -f \
       --color 000000 \
       --inside-color 161819 \
@@ -84,8 +86,8 @@ let
       --separator-color 00000000 \
       --indicator-radius 90 \
       --indicator-thickness 8 \
-      --font "Tamzen" \
-      --font-size 15
+      --font "JetBrains Mono" \
+      --font-size 12
   '';
 
   # --------------------------------------------------------- waybar config
@@ -94,10 +96,9 @@ let
   # module and alacritty.toml.
   #
   # Note what is NOT here: glyph icons. fonts.packages has no Nerd Font, and
-  # the bar's font, Tamzen, covers only ASCII and part of Latin-1, so
+  # the bar's font, JetBrains Mono, has none of the icon glyphs, so
   # icon-based formats would render as tofu boxes or fall back to another
-  # font. The text labels below instead follow the tmux status bar in
-  # terminal.nix, which already writes battery as "B: 85%".
+  # font. The text labels below are in the style of the tmux status bar.
   #
   # Click commands use absolute store paths. waybar runs as a systemd user
   # service, whose PATH does not include /run/current-system/sw/bin, so a bare
@@ -321,6 +322,10 @@ in
     # every graphical session.
     systemd.target = "niri.service";
   };
+  # Stem darkening for the bar's JetBrains Mono, as footWrapped does for foot
+  # in terminal.nix: the same macOS-like weight on both. FreeType only
+  # applies it to CFF outlines, which is the build fontconfig picks.
+  systemd.user.services.waybar.environment.FREETYPE_PROPERTIES = "cff:no-stem-darkening=0";
   environment.etc."xdg/waybar/config".source = waybarConfig;
   environment.etc."xdg/waybar/style.css".source = ./waybar.css;
 
@@ -332,7 +337,10 @@ in
   # is more correct than a hand-written one); only the target is retargeted.
   # Its config cannot live in /etc, so it is linked into ~/.config -- which
   # also means mako finds it when D-Bus activates it rather than systemd.
-  systemd.user.services.mako = sessionService;
+  # FREETYPE_PROPERTIES: stem darkening for its JetBrains Mono, as for foot.
+  systemd.user.services.mako = sessionService // {
+    environment.FREETYPE_PROPERTIES = "cff:no-stem-darkening=0";
+  };
 
   systemd.tmpfiles.rules =
     let
