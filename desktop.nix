@@ -113,15 +113,15 @@ let
       "niri/workspaces"
       "niri/window"
     ];
-    # No clock: the date and time are in tmux's status bar. No volume or
-    # brightness either: the swayosd indicator shows them when they change,
-    # and Mod+A opens the wiremix mixer.
+    # No volume or brightness: the swayosd indicator shows them when they
+    # change, and Mod+A opens the wiremix mixer.
     modules-right = [
       "tray"
       "idle_inhibitor"
       "bluetooth"
       "network"
       "battery"
+      "clock"
     ];
 
     # niri creates and destroys workspaces dynamically, so the bar shows
@@ -136,6 +136,12 @@ let
       separate-outputs = true;
     };
 
+    # The time only, HH:MM; the date, YYYY-MM-DD, is in the tooltip.
+    clock = {
+      format = "{:%H:%M}";
+      tooltip-format = "{:%Y-%m-%d}";
+    };
+
     battery = {
       states = {
         warning = 25;
@@ -143,7 +149,9 @@ let
       };
       format = "B: {capacity}%";
       format-charging = "B: {capacity}% +";
-      format-plugged = "B: {capacity}% AC";
+      # Plugged in but not charging (held by the tlp thresholds): no marker,
+      # the same as on battery. "+" appears only while it actually charges.
+      format-plugged = "B: {capacity}%";
       tooltip-format = "{timeTo}\n{power:0.1f}W";
     };
 

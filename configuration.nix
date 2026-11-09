@@ -200,6 +200,7 @@
     spotify
     mpv
     glow
+    zed-editor
   ];
 
   programs.nix-ld.enable = true;

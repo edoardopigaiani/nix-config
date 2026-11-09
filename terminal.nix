@@ -172,10 +172,9 @@ in
       set -g status-position bottom
       set -g status-justify centre
       set -g status-style 'bg=colour235 fg=colour7'
-      set -g status-left '%d#[fg=colour4]-#[fg=colour7]%m'
-      set -g status-right ' %H#[fg=colour4]:#[fg=colour7]%M '
-      set -g status-right-length 50
-      set -g status-left-length 18
+      # Only the window list: the time is in waybar, the date in its tooltip.
+      set -g status-left ""
+      set -g status-right ""
 
       setw -g window-status-current-style 'fg=colour7 bg=colour235'
       setw -g window-status-current-format '#[fg=colour4]> #[fg=colour7]#W#[fg=colour7]'
