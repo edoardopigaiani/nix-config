@@ -102,13 +102,11 @@ window#waybar.empty #window {
 }
 
 /* ----------------------------------------------------------------- state */
-/* Lime, the green the terminal shows as its cursor and accent (ANSI slot
- * "cyan" in this theme), in every state that is not a warning -- charging
- * included. */
-#battery {
-  color: @lime;
-}
-
+/* Every indicator is white in its normal state: the labels already name
+ * themselves (B:, BT:, N:, Idle), so colour is spent only on the states that
+ * ask for attention -- a low battery and a dropped network. White comes from
+ * the shared rule above, so the normal state needs no block of its own and
+ * only the exceptions appear below. */
 #battery.warning:not(.charging) {
   color: @orange;
 }
@@ -128,19 +126,6 @@ window#waybar.empty #window {
 
 #network.disconnected {
   color: @red;
-}
-
-#network {
-  color: @blue;
-}
-
-#idle_inhibitor.activated {
-  color: @lime;
-}
-
-/* White in every state, OFF included: the label already says it. */
-#bluetooth {
-  color: @foreground;
 }
 
 /* ------------------------------------------------------------------ tray */
