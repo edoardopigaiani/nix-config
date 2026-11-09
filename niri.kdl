@@ -68,10 +68,9 @@ output "eDP-1" {
 layout {
     gaps 8
 
-    // The desktop background, drawn by niri itself. This is why swaybg is not
-    // installed: there is no wallpaper, just the palette's background colour,
-    // so an empty workspace looks like an empty terminal. Point swaybg at an
-    // image here instead if you ever want one.
+    // Drawn under the wallpaper: swaybg (a user service in desktop.nix) covers
+    // it, so this black only shows if the image is missing or before swaybg
+    // has started.
     background-color "#000000"
 
     // Columns stay where they are instead of sliding to the centre when

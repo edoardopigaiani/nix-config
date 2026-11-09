@@ -25,15 +25,14 @@
 @define-color lime        #a9b665;  /* terminalCursor.foreground, the accent */
 
 * {
-  /* JetBrains Mono at 12px, the same face and size as foot (9 pt there, which
-   * foot turns into 12 px), so the bar and the terminal below it read as one
-   * surface. The modules are plain-text labels (B:, V:, L:, N:, Idle), so no
-   * icon glyphs are needed. CSS cannot pick a font format, but fontconfig
-   * already prefers the OTF (CFF) build, which is what the stem darkening set
-   * on the waybar unit in desktop.nix needs; antialiasing (greyscale) and
-   * hinting (slight) come from the GTK gsettings, matching foot's font line. */
-  font-family: "JetBrains Mono", monospace;
-  font-size: 12px;
+  /* Tamzen, the same face and 8x15 strike as Alacritty and foot, so the bar
+   * and the terminal below it read as one surface. It works here because the
+   * modules are plain-text labels (B:, V:, L:, N:, Idle) with no icon glyphs,
+   * and because Tamzen ships OTB files, the only bitmap format Pango still
+   * loads. The size must stay 15px: a bitmap is only sharp at its own strike
+   * sizes (9 and 12-16 and 20px), and anything else gets scaled. */
+  font-family: "Tamzen", monospace;
+  font-size: 15px;
   /* GTK draws a rounded shadow on tooltips and menus otherwise. */
   border: none;
   border-radius: 0;
