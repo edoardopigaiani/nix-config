@@ -42,21 +42,16 @@
   ];
 
   # Limit boot menu entries (prevents the EFI partition from filling up).
-  #
-  # Raised from 10 to 30 for the GNOME-to-niri migration: tuning a compositor
-  # takes a burst of rebuilds, and at 10 the generation that still boots into
-  # GNOME would drop out of the menu within an evening. This is nearly free
-  # here -- every generation so far shares one kernel and one initrd, which
-  # systemd-boot stores once under its store hash, so /boot sits at 48 MiB of
-  # 1022. A kernel bump is what actually costs space; drop this back if /boot
-  # ever gets tight.
-  boot.loader.systemd-boot.configurationLimit = 30;
+  # Ten generations are plenty of way back; this was 30 during the GNOME-to-
+  # niri migration, and with GNOME gone (phase 3) it is back to normal. It
+  # only trims the menu: the generations themselves are collected by nh clean
+  # above.
+  boot.loader.systemd-boot.configurationLimit = 10;
 
-  # The default 5s is hard to catch with Plymouth covering the handoff, and
-  # the generations from before migration phase 3 -- the last ones with GNOME
-  # -- are the way back if its removal turns out to have broken something.
-  # Lower it again once nh clean has collected them.
-  boot.loader.timeout = 15;
+  # Seconds the boot menu waits. 5 is systemd-boot's own default; it was 15
+  # during the migration, so a GNOME generation was easy to pick. Any key
+  # stops the countdown.
+  boot.loader.timeout = 5;
 
   # Graphical boot: Plymouth shows the firmware logo and asks for the LUKS
   # passphrase graphically. This needs the systemd initrd, which is the default.

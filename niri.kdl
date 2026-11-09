@@ -171,9 +171,16 @@ binds {
 
     Mod+Return hotkey-overlay-title="Terminal: foot" { spawn "foot"; }
     Mod+D hotkey-overlay-title="Launcher: fuzzel" { spawn "fuzzel"; }
+    // Clipboard history (cliphist, a user service in desktop.nix): pick an
+    // entry in fuzzel and it becomes the clipboard again, ready for Ctrl+V.
+    // --with-nth 2 hides cliphist's numeric id column; decode needs the whole
+    // line, which is what fuzzel prints back.
+    Mod+V hotkey-overlay-title="Clipboard history" { spawn "sh" "-c" "cliphist list | fuzzel --dmenu --with-nth 2 --prompt 'clip> ' | cliphist decode | wl-copy"; }
     Mod+B hotkey-overlay-title="Browser: Firefox" { spawn "firefox"; }
     // yazi is the file manager that replaces Nautilus; it runs in a terminal.
     Mod+E hotkey-overlay-title="Files: yazi" { spawn "foot" "-a" "yazi" "yazi"; }
+    // The audio mixer: outputs, inputs and per-app volume. -a gives the window its own app-id.
+    Mod+A hotkey-overlay-title="Audio mixer: wiremix" { spawn "foot" "-a" "wiremix" "wiremix"; }
     // Not Mod+L: that is "focus the column to the right" below, and `niri
     // validate` rejects the duplicate.
     Mod+Shift+L hotkey-overlay-title="Lock the screen" { spawn "loginctl" "lock-session"; }
@@ -280,14 +287,17 @@ binds {
 
     // ------------------------------------------------------------ hardware
     // allow-when-locked lets these keep working on the lock screen, which is
-    // what you want for volume and brightness.
-    XF86AudioRaiseVolume allow-when-locked=true { spawn "wpctl" "set-volume" "-l" "1.0" "@DEFAULT_AUDIO_SINK@" "5%+"; }
-    XF86AudioLowerVolume allow-when-locked=true { spawn "wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "5%-"; }
-    XF86AudioMute        allow-when-locked=true { spawn "wpctl" "set-mute" "@DEFAULT_AUDIO_SINK@" "toggle"; }
-    XF86AudioMicMute     allow-when-locked=true { spawn "wpctl" "set-mute" "@DEFAULT_AUDIO_SOURCE@" "toggle"; }
+    // what you want for volume and brightness. swayosd-client changes the
+    // value and shows the on-screen bar (swayosd, desktop.nix); its config
+    // caps the volume at 100% and the brightness at a 5% minimum. Steps are
+    // 5%, as before.
+    XF86AudioRaiseVolume allow-when-locked=true { spawn "swayosd-client" "--output-volume" "+5"; }
+    XF86AudioLowerVolume allow-when-locked=true { spawn "swayosd-client" "--output-volume" "-5"; }
+    XF86AudioMute        allow-when-locked=true { spawn "swayosd-client" "--output-volume" "mute-toggle"; }
+    XF86AudioMicMute     allow-when-locked=true { spawn "swayosd-client" "--input-volume" "mute-toggle"; }
 
-    XF86MonBrightnessUp   allow-when-locked=true { spawn "brightnessctl" "set" "5%+"; }
-    XF86MonBrightnessDown allow-when-locked=true { spawn "brightnessctl" "set" "5%-"; }
+    XF86MonBrightnessUp   allow-when-locked=true { spawn "swayosd-client" "--brightness" "+5"; }
+    XF86MonBrightnessDown allow-when-locked=true { spawn "swayosd-client" "--brightness" "-5"; }
 
     XF86AudioPlay allow-when-locked=true { spawn "playerctl" "play-pause"; }
     XF86AudioNext allow-when-locked=true { spawn "playerctl" "next"; }

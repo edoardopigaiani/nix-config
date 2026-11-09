@@ -113,12 +113,12 @@ let
       "niri/workspaces"
       "niri/window"
     ];
-    # No clock: the date and time are in tmux's status bar.
+    # No clock: the date and time are in tmux's status bar. No volume or
+    # brightness either: the swayosd indicator shows them when they change,
+    # and Mod+A opens the wiremix mixer.
     modules-right = [
       "tray"
       "idle_inhibitor"
-      "wireplumber"
-      "backlight"
       "bluetooth"
       "network"
       "battery"
@@ -145,24 +145,6 @@ let
       format-charging = "B: {capacity}% +";
       format-plugged = "B: {capacity}% AC";
       tooltip-format = "{timeTo}\n{power:0.1f}W";
-    };
-
-    # wireplumber, not pulseaudio: services.pipewire runs wireplumber as its
-    # session manager, and the native module reads it without the pulse
-    # compatibility layer in between.
-    wireplumber = {
-      # Bare numbers for volume and brightness; only battery and Wi-Fi signal
-      # carry a %.
-      format = "V: {volume}";
-      format-muted = "V: --";
-      on-click = "${pkgs.wireplumber}/bin/wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle";
-      on-click-right = "${foot} -a wiremix ${pkgs.wiremix}/bin/wiremix";
-      scroll-step = 5;
-    };
-
-    backlight = {
-      format = "L: {percent}";
-      scroll-step = 5;
     };
 
     # "BT" because B: is the battery. Shows the connected device's name, or
@@ -402,6 +384,51 @@ in
     };
   };
 
+  # ------------------------------------------------- on-screen indicator
+  # swayosd shows a bar with the new level when the volume or brightness keys
+  # are pressed; niri.kdl binds those keys to swayosd-client, which changes
+  # the value itself (through PipeWire and the backlight sysfs node) and asks
+  # this server to draw it. Config and style are passed as store paths
+  # rather than installed in /etc/xdg, so they cannot drift from the repo.
+  #   - max_volume = 100: no amplification past 100%, as the old wpctl
+  #     binding's -l 1.0 did.
+  #   - min_brightness = 5: never all the way to a black screen.
+  #   - show_percentage: the number next to the bar. waybar has no volume or
+  #     brightness module, so this is where the values are read.
+  # The package's swayosd-libinput-backend (a root service that shows Caps
+  # Lock and the like) is not enabled: nothing here needs it.
+  systemd.user.services.swayosd = sessionService // {
+    description = "On-screen display for volume and brightness";
+    serviceConfig = {
+      ExecStart =
+        let
+          config = pkgs.writeText "swayosd-config.toml" ''
+            [server]
+            max_volume = 100
+            min_brightness = 5
+            show_percentage = true
+          '';
+        in
+        "${pkgs.swayosd}/bin/swayosd-server --config ${config} --style ${./swayosd.css}";
+      Restart = "on-failure";
+    };
+  };
+
+  # ------------------------------------------------------ clipboard history
+  # cliphist keeps the last 750 things copied (text and images); Mod+V in
+  # niri.kdl lists them in fuzzel and copies the chosen one back. wl-paste
+  # --watch runs `cliphist store` on every clipboard change. Copies that a
+  # password manager marks as sensitive are skipped (cliphist honours
+  # wl-clipboard's CLIPBOARD_STATE=sensitive). The history lives in
+  # ~/.cache/cliphist/db; `cliphist wipe` empties it.
+  systemd.user.services.cliphist = sessionService // {
+    description = "Clipboard history";
+    serviceConfig = {
+      ExecStart = "${pkgs.wl-clipboard}/bin/wl-paste --watch ${pkgs.cliphist}/bin/cliphist store";
+      Restart = "on-failure";
+    };
+  };
+
   # ------------------------------------------------------- night light
   # GNOME's Night Light. Rome's coordinates; wlsunset computes the times from
   # them rather than taking fixed hours. Mod+N in niri.kdl turns it off or
@@ -464,8 +491,8 @@ in
       # Charge only below 75% and stop at 80%: a battery kept full wears out
       # much faster, and this laptop is mostly on its charger. For one full
       # charge before a trip: `sudo tlp fullcharge BAT0`.
-      START_CHARG_THRESH_BAT0 = 75;
-      STOP_CHARG_THRESH_BAT0 = 80;
+      START_CHARGE_THRESH_BAT0 = 75;
+      STOP_CHARGE_THRESH_BAT0 = 80;
       # No turbo on battery: less heat and power, little difference for
       # everyday use.
       CPU_BOOST_ON_AC = 1;
@@ -617,6 +644,8 @@ in
     udiskie # automount; udiskie-umount to unmount
     wlsunset # night light
     swaybg # wallpaper, see the unit above
+    swayosd # volume/brightness indicator; swayosd-client is what niri.kdl binds
+    cliphist # clipboard history, Mod+V
     xwayland-satellite # XWayland for Steam, see the unit above
     wl-clipboard # already in terminal.nix for tmux; listed as a session dep
 

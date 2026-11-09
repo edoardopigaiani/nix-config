@@ -1,0 +1,67 @@
+/* swayosd, the on-screen indicator for the volume and brightness keys.
+ *
+ * Passed to swayosd-server by its unit in desktop.nix. This is GTK4 CSS and
+ * replaces swayosd's own stylesheet entirely, so every rule it needs is here.
+ * The look follows waybar.css: the same "Noir Essence Dark" palette, square
+ * corners, a hairline border in the muted grey and Tamzen at its 8x15 strike
+ * for the percentage. GTK4's CSS has no @define-color scoping worth using
+ * here, so the colours are written out; waybar.css names them. */
+
+window#osd {
+  background: #000000;              /* background */
+  border: 1px solid #434545;        /* muted */
+  border-radius: 0;
+}
+
+window#osd #container {
+  margin: 12px 16px;
+}
+
+/* The icon (from the Adwaita icon theme) and the percentage. */
+window#osd image,
+window#osd label {
+  color: #f7f3ea;                   /* foreground */
+}
+
+window#osd label {
+  font-family: "Tamzen", monospace;
+  font-size: 15px;
+}
+
+/* Muted output or microphone: the bar and icon dim instead of disappearing. */
+window#osd progressbar:disabled,
+window#osd image:disabled {
+  opacity: 0.4;
+}
+
+window#osd progressbar,
+window#osd segmentedprogress {
+  min-height: 6px;
+  border-radius: 0;
+  background: transparent;
+  border: none;
+}
+
+window#osd trough,
+window#osd segment {
+  min-height: inherit;
+  border-radius: 0;
+  border: none;
+  background: #2b2d2d;              /* overlay */
+}
+
+window#osd progress,
+window#osd segment.active {
+  min-height: inherit;
+  border-radius: 0;
+  border: none;
+  background: #f7f3ea;              /* foreground: white, like the label */
+}
+
+window#osd segment {
+  margin-left: 4px;
+}
+
+window#osd segment:first-child {
+  margin-left: 0;
+}
