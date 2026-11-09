@@ -201,6 +201,7 @@
     mpv
     glow
     zed-editor
+    btop
   ];
 
   programs.nix-ld.enable = true;
