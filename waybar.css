@@ -9,25 +9,31 @@
  * only the subset of selectors GTK implements. @define-color is the GTK way
  * of naming a colour once.
  *
- * Palette: "Noir Essence Dark", the same values as alacritty.toml's [colors]
- * and the foot block in terminal.nix. */
+ * Palette: "Ayu Dark", a copy of alacritty.toml's [colors] -- that file is the
+ * reference copy for the whole tree, and every value below appears in it. The
+ * three greys are the ones ayu names by role rather than by ANSI number, which
+ * is why their comments say where they come from. The whole palette is kept,
+ * not only the slots in use:
+ * @green, @yellow, @blue, @magenta and @cyan currently have no rule of their
+ * own. */
 
-@define-color background  #000000;  /* pure black, == terminal bg (theme: #111314) */
-@define-color surface     #161819;  /* editorWidget.background */
-@define-color overlay     #2b2d2d;  /* editor.selectionBackground */
-@define-color muted       #434545;  /* ansi bright black */
-@define-color foreground  #f7f3ea;
-@define-color red         #ea6962;
-@define-color green       #89b482;
-@define-color orange      #e78a4e;
-@define-color blue        #7daea3;
-@define-color magenta     #d3869b;
-@define-color lime        #a9b665;  /* terminalCursor.foreground, the accent */
+@define-color background  #000000;  /* pure black, == terminal bg (ayu: #0f1419) */
+@define-color surface     #151a1e;  /* ayu's panel background */
+@define-color overlay     #253340;  /* editor.selectionBackground */
+@define-color muted       #5c6773;  /* ayu's UI grey: comments, inactive tabs */
+@define-color foreground  #e6e1cf;
+@define-color red         #ff3333;
+@define-color green       #b8cc52;
+@define-color yellow      #e7c547;  /* the ANSI slot, not the accent below */
+@define-color orange      #f29718;  /* ayu's amber accent: the terminal cursor */
+@define-color blue        #36a3d9;
+@define-color magenta     #f07178;
+@define-color cyan        #95e6cb;
 
 * {
   /* Tamzen, the same face and 8x15 strike as Alacritty and foot, so the bar
    * and the terminal below it read as one surface. It works here because the
-   * modules are plain-text labels (B:, BT:, N:, Idle) with no icon glyphs,
+   * modules are plain-text labels (B:, C/I, the clock) with no icon glyphs,
    * and because Tamzen ships OTB files, the only bitmap format Pango still
    * loads. The size must stay 15px: a bitmap is only sharp at its own strike
    * sizes (9 and 12-16 and 20px), and anything else gets scaled. */
@@ -39,11 +45,17 @@
   min-height: 0;
 }
 
+/* Fully transparent: the wallpaper, or whatever window is underneath, shows
+ * through the whole strip. "transparent" and not an alpha on @background --
+ * GTK would still composite a black film over the image.
+ *
+ * The hairline that used to sit at the bottom edge is gone with it: with no
+ * bar surface to end, a grey line across the screen reads as a stray rule
+ * rather than as the edge of anything. Nothing separates the modules from a
+ * maximised window now except the 8px gap niri leaves above it. */
 window#waybar {
-  background-color: @background;
+  background-color: transparent;
   color: @foreground;
-  /* A hairline that separates the bar from a maximised window underneath. */
-  border-bottom: 1px solid @muted;
 }
 
 /* Every module gets the same breathing room; the bar is 10px padded on the
@@ -57,10 +69,8 @@ window#waybar {
 #workspaces button,
 #window,
 #tray,
-#bluetooth,
 #battery,
 #clock,
-#network,
 #idle_inhibitor {
   padding: 0 8px;
   color: @foreground;
@@ -68,8 +78,11 @@ window#waybar {
 }
 
 /* ------------------------------------------------------------ workspaces */
+/* Every index is the same white, active or not -- they all inherit it from
+ * the shared rule above, so no block here sets a colour. What marks the
+ * current workspace is the presence of the underline, not a difference in
+ * shade. */
 #workspaces button {
-  color: @muted;
   /* The marker sits under the label rather than around it, which keeps the
    * row from jumping when a workspace appears or disappears -- niri creates
    * and destroys them dynamically. */
@@ -77,8 +90,7 @@ window#waybar {
 }
 
 #workspaces button.active {
-  color: @foreground;
-  border-bottom: 2px solid @lime;
+  border-bottom: 2px solid @foreground;
 }
 
 #workspaces button.urgent {
@@ -87,26 +99,24 @@ window#waybar {
 }
 
 #workspaces button:hover {
-  color: @foreground;
   background-color: @overlay;
 }
 
 /* ---------------------------------------------------------------- window */
-#window {
-  color: @muted;
-}
-
+/* The title is the same white as everything else: it inherits it from the
+ * shared rule above and sets no colour of its own. */
 window#waybar.empty #window {
   /* No window focused: collapse the title rather than leave a gap. */
   padding: 0;
 }
 
 /* ----------------------------------------------------------------- state */
-/* Every indicator is white in its normal state: the labels already name
- * themselves (B:, BT:, N:, Idle), so colour is spent only on the states that
- * ask for attention -- a low battery and a dropped network. White comes from
- * the shared rule above, so the normal state needs no block of its own and
- * only the exceptions appear below. */
+/* The battery is white whether it is charging, plugged, full or draining. The
+ * only hint left about mains is the "+" that format-charging appends while it
+ * actually refills (desktop.nix); plugged-but-held by the tlp thresholds
+ * reads exactly like running on battery, which is the trade for one colour
+ * across the bar. Only the two low-charge warnings below break the white, and
+ * :not(.charging) keeps them from firing while it refills. */
 #battery.warning:not(.charging) {
   color: @orange;
 }
@@ -124,8 +134,10 @@ window#waybar.empty #window {
   }
 }
 
-#network.disconnected {
-  color: @red;
+/* "C" while the idle lock is inhibited, "I" when it is not. Orange is the
+ * deliberately-odd state: something is holding the screen awake. */
+#idle_inhibitor.activated {
+  color: @orange;
 }
 
 /* ------------------------------------------------------------------ tray */

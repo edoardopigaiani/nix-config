@@ -167,7 +167,7 @@ in
 
       # bar
       # colour235 is weechat's title/status bar grey (#262626), which
-      # noir_essence.lua also uses for Neovim's statusline; only the
+      # ayu_dark.lua also uses for Neovim's statusline; only the
       # background changed, the foreground colours are as they were.
       set -g status-position bottom
       set -g status-justify centre
@@ -239,8 +239,9 @@ in
         font = "Tamzen:pixelsize=15";
 
         # Alacritty's draw_bold_text_with_bright_colors: bold regular colours
-        # switch to their bright palette entry. That only changes black here,
-        # as the theme's bright and normal colours are otherwise equal.
+        # switch to their bright palette entry. Under Noir Essence Dark that
+        # only ever changed black; ayu makes bright lighter than normal in all
+        # eight slots, so bold now shifts colour throughout.
         bold-text-in-bright = "palette-based";
 
         # Alacritty sets TERM=xterm-256color; foot's own entry is more
@@ -275,39 +276,39 @@ in
         show-urls-launch = "Control+Shift+o Control+Shift+h";
       };
 
-      # Noir Essence Dark, the same values as alacritty.toml's [colors],
-      # including the pure-black background and color0.
+      # Ayu Dark, the same values as alacritty.toml's [colors], including the
+      # pure-black background and regular0.
       colors-dark = {
         background = "000000";
-        foreground = "f7f3ea";
-        cursor = "334743 a9b665"; # text, then cursor
+        foreground = "e6e1cf";
+        cursor = "000000 f29718"; # text, then cursor
         # foot has no CellForeground; the default foreground is what nearly
         # every selected cell would show anyway.
-        selection-foreground = "f7f3ea";
-        selection-background = "2b2d2d";
+        selection-foreground = "e6e1cf";
+        selection-background = "253340";
         # Alacritty's hint and search-match colours.
-        jump-labels = "000000 e78a4e";
-        search-box-match = "000000 e78a4e";
-        search-box-no-match = "000000 ea6962";
-        scrollback-indicator = "f7f3ea 161819";
-        urls = "7daea3";
+        jump-labels = "000000 f29718";
+        search-box-match = "000000 f29718";
+        search-box-no-match = "000000 ff3333";
+        scrollback-indicator = "e6e1cf 151a1e";
+        urls = "36a3d9";
 
         regular0 = "000000";
-        regular1 = "ea6962";
-        regular2 = "89b482";
-        regular3 = "e78a4e";
-        regular4 = "7daea3";
-        regular5 = "d3869b";
-        regular6 = "a9b665";
-        regular7 = "f7f3ea";
-        bright0 = "434545";
-        bright1 = "ea6962";
-        bright2 = "89b482";
-        bright3 = "e78a4e";
-        bright4 = "7daea3";
-        bright5 = "d3869b";
-        bright6 = "a9b665";
-        bright7 = "f7f3ea";
+        regular1 = "ff3333";
+        regular2 = "b8cc52";
+        regular3 = "e7c547";
+        regular4 = "36a3d9";
+        regular5 = "f07178";
+        regular6 = "95e6cb";
+        regular7 = "ffffff";
+        bright0 = "323232";
+        bright1 = "ff6565";
+        bright2 = "eafe84";
+        bright3 = "fff779";
+        bright4 = "68d5ff";
+        bright5 = "ffa3aa";
+        bright6 = "c7fffd";
+        bright7 = "ffffff";
       };
     };
   };
@@ -341,8 +342,17 @@ in
         gitsigns-nvim
         which-key-nvim
         nvim-lspconfig # server definitions for vim.lsp.enable
-        # The Noir Essence port, as a one-file plugin providing
-        # :colorscheme noir_essence.
+        # The Ayu Dark port, as a one-file plugin providing
+        # :colorscheme ayu_dark. nvim.lua selects it; it is the same palette
+        # alacritty.toml and foot are set to.
+        (pkgs.linkFarm "ayu-dark-nvim" [
+          {
+            name = "colors/ayu_dark.lua";
+            path = ./ayu_dark.lua;
+          }
+        ])
+        # The previous theme, kept installed so :colorscheme noir_essence
+        # still works for comparison.
         (pkgs.linkFarm "noir-essence-nvim" [
           {
             name = "colors/noir_essence.lua";

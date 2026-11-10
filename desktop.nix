@@ -28,14 +28,21 @@
 #     gnome-shell. Binding to niri.service scopes them to niri; niri.service
 #     is `BindsTo=graphical-session.target`, so they still stop cleanly.
 #
-# Colours everywhere are "Noir Essence Dark"; alacritty.toml's [colors] is the
-# reference copy.
+# Colours everywhere are "Ayu Dark"; alacritty.toml's [colors] is the reference
+# copy, and every value in this file, in waybar.css, mako.conf, swayosd.css,
+# fuzzel.ini and niri.kdl appears there. console.colors below is the same
+# palette too -- those 16 slots are the ANSI ones.
+#
+# Three of the values ayu names by role rather than by ANSI number do most of
+# the work in the chrome, so they are worth knowing by sight: #151a1e is the
+# panel background (mako's notification, swaylock's indicator, waybar's menus),
+# #253340 the selection grey, and #5c6773 the UI grey that the session's
+# borders and hairlines are drawn in. The one exception is niri's focus ring,
+# which is deliberately quieter; niri.kdl says why.
 
 { config, pkgs, ... }:
 
 let
-  foot = "${config.programs.foot.package}/bin/foot";
-
   # ----------------------------------------------------------- niri config
   # The KDL is checked at build time, so a typo fails `nh os switch` with the
   # parse error instead of handing you a compositor that will not start. niri
@@ -53,6 +60,19 @@ let
   # at a fixed 15px, its 8x15 strike: without --font-size swaylock sizes the
   # text from the indicator radius, which would scale the bitmap.
   #
+  # Colours are "Ayu Dark" like everything else. The idle ring is 5c6773, ayu's
+  # UI grey, the same grey as fuzzel's border and the hairlines in waybar and
+  # swayosd. Not 323232, ayu's ansi bright black, which niri's focus ring does
+  # use: on a lock screen the ring is the only thing on a black field and has
+  # to be findable, where niri's sits against window content and is meant to
+  # stay out of the way. 151a1e, filling the indicator, is ayu's panel
+  # background.
+  #
+  # The keystroke tick (--key-hl-color) is ayu's ansi green and not its amber
+  # accent, which here is spent on the verifying ring: at the same colour, a
+  # tick appearing while you type would look like the ring having already
+  # flipped to verifying.
+  #
   # Only swayidle invokes this: `loginctl lock-session` raises logind's Lock
   # signal, swayidle's `lock` event catches it, and Mod+Shift+L in niri.kdl
   # calls loginctl. One definition covers the manual lock, the idle lock and
@@ -66,20 +86,20 @@ let
   lockCommand = pkgs.writeShellScript "lock-screen" ''
     exec ${pkgs.swaylock}/bin/swaylock -f \
       --color 000000 \
-      --inside-color 161819 \
-      --inside-clear-color 161819 \
-      --inside-ver-color 161819 \
-      --inside-wrong-color 161819 \
-      --ring-color 434545 \
-      --ring-clear-color 7daea3 \
-      --ring-ver-color e78a4e \
-      --ring-wrong-color ea6962 \
-      --key-hl-color a9b665 \
-      --bs-hl-color ea6962 \
-      --text-color f7f3ea \
-      --text-clear-color f7f3ea \
-      --text-ver-color f7f3ea \
-      --text-wrong-color f7f3ea \
+      --inside-color 151a1e \
+      --inside-clear-color 151a1e \
+      --inside-ver-color 151a1e \
+      --inside-wrong-color 151a1e \
+      --ring-color 5c6773 \
+      --ring-clear-color 36a3d9 \
+      --ring-ver-color f29718 \
+      --ring-wrong-color ff3333 \
+      --key-hl-color b8cc52 \
+      --bs-hl-color ff3333 \
+      --text-color e6e1cf \
+      --text-clear-color e6e1cf \
+      --text-ver-color e6e1cf \
+      --text-wrong-color e6e1cf \
       --line-color 00000000 \
       --separator-color 00000000 \
       --indicator-radius 90 \
@@ -98,11 +118,10 @@ let
   # boxes or fall back to another font. The text labels below are in the
   # style of the tmux status bar.
   #
-  # Click commands use absolute store paths. waybar runs as a systemd user
-  # service, whose PATH does not include /run/current-system/sw/bin, so a bare
-  # "foot" or "wpctl" fails with "command not found" and the click does
-  # nothing. foot is config.programs.foot.package, the wrapped one terminal.nix
-  # configures.
+  # No module here spawns anything on click, so none of them needs an absolute
+  # store path: waybar runs as a systemd user service whose PATH does not
+  # include /run/current-system/sw/bin, and a bare "foot" would fail with
+  # "command not found". Keep that in mind before adding an on-click.
   waybarConfig = (pkgs.formats.json { }).generate "waybar-config" {
     layer = "top";
     position = "top";
@@ -113,13 +132,13 @@ let
       "niri/workspaces"
       "niri/window"
     ];
-    # No volume or brightness: the swayosd indicator shows them when they
-    # change, and Mod+A opens the wiremix mixer.
+    # Deliberately sparse: only what is worth a permanent glance. Volume and
+    # brightness are shown by the swayosd indicator when they change, and the
+    # rest is managed in a terminal instead of being watched here -- audio
+    # with wiremix (Mod+A), bluetooth with `bluetui`, wifi with `nmtui`.
     modules-right = [
       "tray"
       "idle_inhibitor"
-      "bluetooth"
-      "network"
       "battery"
       "clock"
     ];
@@ -150,39 +169,17 @@ let
       format = "B: {capacity}%";
       format-charging = "B: {capacity}% +";
       # Plugged in but not charging (held by the tlp thresholds): no marker,
-      # the same as on battery. "+" appears only while it actually charges.
+      # the same as on battery. "+" appears only while it actually charges,
+      # and since waybar.css paints every battery state the same white, that
+      # "+" is the only thing on the bar that distinguishes the two.
       format-plugged = "B: {capacity}%";
       tooltip-format = "{timeTo}\n{power:0.1f}W";
     };
 
-    # "BT" because B: is the battery. Shows the connected device's name, or
-    # whether the adapter is on; the tooltip lists every connected device.
-    bluetooth = {
-      format = "BT: ON";
-      format-off = "BT: OFF";
-      format-disabled = "BT: OFF";
-      format-no-controller = "";
-      format-connected = "BT: {device_alias}";
-      format-connected-battery = "BT: {device_alias} {device_battery_percentage}%";
-      max-length = 30;
-      tooltip-format = "{controller_alias}  {controller_address}";
-      tooltip-format-connected = "{controller_alias}  {controller_address}\n\n{device_enumerate}";
-      tooltip-format-enumerate-connected = "{device_alias}  {device_address}";
-      tooltip-format-enumerate-connected-battery = "{device_alias}  {device_address}  {device_battery_percentage}%";
-      # bluetui scans, pairs, trusts and connects; no applet needed.
-      on-click = "${foot} -a bluetui ${pkgs.bluetui}/bin/bluetui";
-    };
-
-    network = {
-      # Signal strength only; the network name is in the tooltip.
-      format-wifi = "N: {signalStrength}%";
-      format-ethernet = "N: eth";
-      format-disconnected = "N: offline";
-      tooltip-format = "{ifname}  {ipaddr}";
-      tooltip-format-wifi = "{essid}  {ifname}  {ipaddr}";
-      # nmtui ships with NetworkManager; no applet needed.
-      on-click = "${foot} -a nmtui ${pkgs.networkmanager}/bin/nmtui";
-    };
+    # No bluetooth or network module: both are managed from a terminal, with
+    # `bluetui` and `nmtui`. Those two cover scanning, pairing and connecting
+    # on demand, which is the only time the state actually matters; nmcli and
+    # bluetoothctl are there for scripts.
 
     # Inhibits the idle lock below, for a long video or a presentation.
     #
@@ -190,11 +187,14 @@ let
     # as the literal words "activated"/"deactivated", while {icon} is what
     # looks up format-icons. With {status} the map below is dead code and the
     # bar reads "deactivated", which says nothing about what the module is.
+    # Single letters rather than words: at one character the module no longer
+    # shifts the modules to its right when it toggles, and waybar.css carries
+    # the meaning -- C is orange while the lock is inhibited, I is white.
     idle_inhibitor = {
       format = "{icon}";
       format-icons = {
-        activated = "Coffee mode";
-        deactivated = "Idle";
+        activated = "C";
+        deactivated = "I";
       };
       # 10 min is swayidle's lock timeout below.
       tooltip-format-activated = "Automatic lock disabled";
@@ -273,34 +273,34 @@ in
       "--kb-power 12"
       # Named ANSI colours rather than hex: the Linux VT is a 16-colour
       # terminal and ignores truecolour escapes. console.colors below remaps
-      # those 16 slots to Noir Essence, so "cyan" here really is #a9b665.
+      # those 16 slots to Ayu Dark, so "cyan" here really is #95e6cb.
       "--theme 'container=black;border=lightblack;title=white;greet=white;time=cyan;prompt=green;input=white;action=blue;button=yellow'"
     ];
   };
 
-  # The kernel console palette, set to Noir Essence so the greeter, the TTYs
-  # and the terminals inside the session all draw from one set of colours.
-  # Values are the ANSI slots from alacritty.toml's [colors.normal] and
+  # The kernel console palette, set to Ayu Dark so the greeter, the TTYs and
+  # the terminals inside the session all draw from one set of colours. Values
+  # are the ANSI slots from alacritty.toml's [colors.normal] and
   # [colors.bright], in the order the kernel expects and without the leading
-  # '#'. The theme defines bright == normal for everything but black, which is
-  # why slots 9-15 repeat 1-7.
+  # '#'. Unlike the Noir Essence port this replaced, ayu gives every bright
+  # slot its own lighter value, so 9-15 no longer repeat 1-7.
   console.colors = [
     "000000" # 0  black, and the console background
-    "ea6962" # 1  red
-    "89b482" # 2  green
-    "e78a4e" # 3  yellow (the theme's orange)
-    "7daea3" # 4  blue
-    "d3869b" # 5  magenta
-    "a9b665" # 6  cyan (the theme's lime, used as the accent)
-    "f7f3ea" # 7  white
-    "434545" # 8  bright black -- the one slot that really differs
-    "ea6962" # 9  bright red
-    "89b482" # 10 bright green
-    "e78a4e" # 11 bright yellow
-    "7daea3" # 12 bright blue
-    "d3869b" # 13 bright magenta
-    "a9b665" # 14 bright cyan
-    "f7f3ea" # 15 bright white
+    "ff3333" # 1  red
+    "b8cc52" # 2  green
+    "e7c547" # 3  yellow
+    "36a3d9" # 4  blue
+    "f07178" # 5  magenta
+    "95e6cb" # 6  cyan
+    "ffffff" # 7  white
+    "323232" # 8  bright black
+    "ff6565" # 9  bright red
+    "eafe84" # 10 bright green
+    "fff779" # 11 bright yellow
+    "68d5ff" # 12 bright blue
+    "ffa3aa" # 13 bright magenta
+    "c7fffd" # 14 bright cyan
+    "ffffff" # 15 bright white
   ];
 
   # ---------------------------------------------------------------- waybar
@@ -387,7 +387,7 @@ in
   systemd.user.services.swaybg = sessionService // {
     description = "Wallpaper";
     serviceConfig = {
-      ExecStart = "${pkgs.swaybg}/bin/swaybg -m fill -c '#000000' -i %h/Pictures/IMG_0967.JPG";
+      ExecStart = "${pkgs.swaybg}/bin/swaybg -m fill -c '#000000' -i %h/Pictures/wallhaven-og7p79.jpg";
       Restart = "on-failure";
     };
   };
@@ -472,13 +472,13 @@ in
 
   # ------------------------------------------------------------- bluetooth
   # Set explicitly: today GNOME's module turns it on with mkDefault, and phase 3
-  # would otherwise lose it without a word. Devices are picked with bluetui,
-  # from the waybar BT: module or as `bluetui` in a terminal.
+  # would otherwise lose it without a word. Devices are paired and connected
+  # with `bluetui` in a terminal; the bar carries no bluetooth module.
   hardware.bluetooth = {
     enable = true;
     powerOnBoot = true;
     # BlueZ's experimental features include the battery level of connected
-    # devices, which waybar's format-connected-battery shows.
+    # devices, which bluetui shows in its device list.
     settings.General.Experimental = true;
   };
   services.gnome.gnome-keyring.enable = true; # VSCode and GitHub Desktop secrets

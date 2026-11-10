@@ -3,83 +3,80 @@ general.live_config_reload = true
 
 [bell]
 animation = "Linear"
-color = '#f7f3ea'
+color = '#e6e1cf'
 duration = 0
 
 # ------------------------------------------------------------------ colors
-# "Noir Essence Dark", ported from the VS Code theme of the same name
-# (u1145h.u1145h-heme-ark, themes/noir_essence_dark.json). The ANSI slots use
-# the theme's own terminal.ansi* mapping, so two quirks below are the theme's
-# and not typos: it defines bright == normal for everything but black, and
-# being Gruvbox Material derived it puts gruvbox aqua in green and gruvbox
-# green in cyan.
+# "Ayu Dark", the upstream ayu palette (ayu-theme/ayu-colors), with one
+# deliberate departure kept from the theme before it: the background is pure
+# black rather than ayu's own #0f1419, and ansi black follows it so a black
+# cell cannot be told from the background.
+#
+# Note what changed in behaviour, not just in hue: Noir Essence Dark defined
+# bright == normal in every slot but black, so the setting below only ever
+# lifted bold black. ayu gives bright a genuinely different, lighter value in
+# all eight slots, so bold text now shifts colour across the whole palette.
 [colors]
-# The theme gives bright and normal the same values, so this only still
-# matters for black: since black is the background colour, bold black text
-# would be invisible without being lifted to bright black.
 draw_bold_text_with_bright_colors = true
 
 [colors.primary]
-background = '#000000'   # editor.background is #111314; overridden to pure black
-foreground = '#f7f3ea'   # terminal.foreground
+background = '#000000'   # ayu's own is #0f1419; overridden to pure black
+foreground = '#e6e1cf'
 
 [colors.cursor]
-cursor = '#a9b665'       # terminalCursor.foreground
-text   = '#334743'       # terminalCursor.background
+cursor = '#f29718'       # ayu's signature amber, its editor caret
+text   = '#000000'
 
 [colors.vi_mode_cursor]
-cursor = '#7daea3'
+cursor = '#36a3d9'       # ansi blue, so the mode is obvious at a glance
 text   = '#000000'
 
 [colors.selection]
-# terminal.selectionBackground is #f7f3ea10; Alacritty takes no alpha here, so
-# this uses editor.selectionBackground, which is the same grey the theme puts
-# in ansi black.
-background = '#2b2d2d'
+background = '#253340'   # ayu editor.selectionBackground
 text       = 'CellForeground'
 
 [colors.search.matches]
-background = '#4f666f'   # editor.findMatchBackground
-foreground = '#f7f3ea'
+background = '#5c6773'   # ayu's UI grey: comments, inactive tabs
+foreground = '#e6e1cf'
 
 [colors.search.focused_match]
-background = '#e78a4e'
+background = '#f29718'
 foreground = '#000000'
 
 [colors.hints.start]
-background = '#e78a4e'
+background = '#f29718'
 foreground = '#000000'
 
 [colors.hints.end]
-background = '#2b2d2d'
-foreground = '#f7f3ea'
+background = '#253340'
+foreground = '#e6e1cf'
 
 [colors.footer_bar]
-background = '#161819'   # editorWidget.background
-foreground = '#f7f3ea'
+background = '#151a1e'   # ayu's panel background, one step off the editor bg
+foreground = '#e6e1cf'
 
 # Normal colors
 [colors.normal]
-# The theme puts #2b2d2d here; overridden to pure black to match the background.
+# ayu puts #0f1419 here; overridden to pure black to match the background.
 black   = '#000000'
-red     = '#ea6962'
-green   = '#89b482'
-yellow  = '#e78a4e'
-blue    = '#7daea3'
-magenta = '#d3869b'
-cyan    = '#a9b665'
-white   = '#f7f3ea'
+red     = '#ff3333'
+green   = '#b8cc52'
+yellow  = '#e7c547'
+blue    = '#36a3d9'
+magenta = '#f07178'
+cyan    = '#95e6cb'
+white   = '#ffffff'
 
 # Bright colors
 [colors.bright]
-black   = '#434545'
-red     = '#ea6962'
-green   = '#89b482'
-yellow  = '#e78a4e'
-blue    = '#7daea3'
-magenta = '#d3869b'
-cyan    = '#a9b665'
-white   = '#f7f3ea'
+black   = '#323232'
+red     = '#ff6565'
+green   = '#eafe84'
+yellow  = '#fff779'
+blue    = '#68d5ff'
+magenta = '#ffa3aa'
+cyan    = '#c7fffd'
+white   = '#ffffff'
 
 [cursor]
 style = "block"

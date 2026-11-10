@@ -11,10 +11,10 @@
 // desktop.nix runs exactly that at build time, so a syntax error fails the
 // rebuild instead of dropping you into a black screen.
 //
-// Colours are "Noir Essence Dark", the same palette as alacritty.toml and the
-// foot block in terminal.nix. They are written out rather than shared because
-// this is a real KDL file, the same trade-off alacritty.toml already makes.
-// alacritty.toml's [colors] section is the reference copy.
+// Colours are "Ayu Dark", the same palette as alacritty.toml and the foot
+// block in terminal.nix; alacritty.toml's [colors] is the reference copy. They
+// are written out rather than shared because this is a real KDL file, the same
+// trade-off alacritty.toml already makes.
 
 // -------------------------------------------------------------------- input
 input {
@@ -89,12 +89,27 @@ layout {
 
     // The focus indicator. niri draws either a focus ring (outside the window)
     // or a border (inside it); using only the ring keeps windows at the size
-    // they asked for. The active colour is the palette's blue (ansi blue,
-    // textLink.foreground in the VS Code theme).
+    // they asked for.
+    //
+    // Active is #323232, ayu's ansi bright black ([colors.bright] black in
+    // alacritty.toml) -- the ring is as quiet as a ring can be, at 1.6:1
+    // against the black background.
+    //
+    // Which is why inactive is fully transparent rather than a darker grey.
+    // There is nothing below #323232 in the palette that stays visible: the
+    // next candidates, #253340 and #0f1419, sit at 1.6:1 and 1.1:1, so the
+    // first is indistinguishable from the active ring and the second from the
+    // background. With no second grey that works, the ring marks focus by
+    // being there at all -- the same move waybar.css makes with the workspace
+    // underline. Unfocused windows simply have no outline.
+    //
+    // If you want every window outlined again, give inactive-color a visible
+    // grey (#253340 was the last one) and lift active-color above it -- #5c6773,
+    // ayu's UI grey, is the one the rest of the session draws borders in.
     focus-ring {
         width 2
-        active-color "#7daea3"
-        inactive-color "#434545"
+        active-color "#323232"
+        inactive-color "#00000000"
     }
 
     border {
@@ -143,7 +158,10 @@ cursor {
 
 // ------------------------------------------------------------------ overview
 overview {
-    backdrop-color "#0b0d0e"
+    // #0f1419 is ayu's own editor background, the one the terminals override to
+    // pure black. Using it here puts the only surface in the session that wants
+    // to sit just off black on the palette's own value for exactly that.
+    backdrop-color "#0f1419"
 }
 
 // --------------------------------------------------------------- animations

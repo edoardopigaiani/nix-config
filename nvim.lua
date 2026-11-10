@@ -10,7 +10,7 @@ vim.g.maplocalleader = " "
 -- Alacritty is truecolour, and tmux passes RGB through for it (terminal-features
 -- in terminal.nix), so the colorscheme's hex values arrive as they are.
 vim.o.termguicolors = true
-vim.cmd.colorscheme("noir_essence")
+vim.cmd.colorscheme("ayu_dark")
 
 -- ---------------------------------------------------------------- options
 vim.o.number = true -- the current line's number...
