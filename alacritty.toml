@@ -3,80 +3,97 @@ general.live_config_reload = true
 
 [bell]
 animation = "Linear"
-color = '#e6e1cf'
+# The visual bell never fires -- duration = 0 disables it -- but the colour is
+# kept in step with the palette: this is the theme's terminal.foreground, the
+# same value [colors.primary] draws text in.
+color = '#d9d7d0'
 duration = 0
 
 # ------------------------------------------------------------------ colors
-# "Ayu Dark", the upstream ayu palette (ayu-theme/ayu-colors), with one
-# deliberate departure kept from the theme before it: the background is pure
-# black rather than ayu's own #0f1419, and ansi black follows it so a black
-# cell cannot be told from the background.
+# "Ayu Classic OLED", Zed's cut of the newer ayu (zed-extensions/ayu), which
+# the editor, foot, Neovim and the whole session chrome are now on. The
+# reference copy is foot's colors-dark block in terminal.nix, ported straight
+# from the theme's own keys; this file follows it, the direction having
+# reversed when the palette changed. It is not the ayu this file used to hold
+# -- that was ayu-vim's original dark, and ayu_dark.lua is what is left of it.
 #
-# Note what changed in behaviour, not just in hue: Noir Essence Dark defined
-# bright == normal in every slot but black, so the setting below only ever
-# lifted bold black. ayu gives bright a genuinely different, lighter value in
-# all eight slots, so bold text now shifts colour across the whole palette.
+# The background needs no override any more: the OLED variant's own background
+# is pure black. ansi black still follows it rather than taking the theme's
+# #01060e, a 1.03:1 glow, so a black cell cannot be told from an empty one.
 [colors]
 draw_bold_text_with_bright_colors = true
 
 [colors.primary]
-background = '#000000'   # ayu's own is #0f1419; overridden to pure black
-foreground = '#e6e1cf'
+background = '#000000'
+foreground = '#d9d7d0'   # the theme's terminal.foreground
 
 [colors.cursor]
-cursor = '#f29718'       # ayu's signature amber, its editor caret
+cursor = '#e6b450'       # ayu's amber accent, the theme's active search match
 text   = '#000000'
 
 [colors.vi_mode_cursor]
-cursor = '#36a3d9'       # ansi blue, so the mode is obvious at a glance
+cursor = '#53bdfa'       # ansi blue, so the mode is obvious at a glance
 text   = '#000000'
 
 [colors.selection]
-background = '#253340'   # ayu editor.selectionBackground
+background = '#152e3d'   # players[0].selection, #59c2ff at 24% over black
 text       = 'CellForeground'
 
 [colors.search.matches]
-background = '#5c6773'   # ayu's UI grey: comments, inactive tabs
-foreground = '#e6e1cf'
+background = '#626a73'   # the theme's UI grey: comments, line numbers
+foreground = '#d9d7d0'
 
 [colors.search.focused_match]
-background = '#f29718'
+background = '#e6b450'
 foreground = '#000000'
 
 [colors.hints.start]
-background = '#f29718'
+background = '#e6b450'
 foreground = '#000000'
 
 [colors.hints.end]
-background = '#253340'
-foreground = '#e6e1cf'
+background = '#152e3d'
+foreground = '#d9d7d0'
 
 [colors.footer_bar]
-background = '#151a1e'   # ayu's panel background, one step off the editor bg
-foreground = '#e6e1cf'
+background = '#1b1f29'   # the strip grey, which foot also puts on entry 235
+foreground = '#d9d7d0'
 
 # Normal colors
 [colors.normal]
-# ayu puts #0f1419 here; overridden to pure black to match the background.
+# The theme puts #01060e here; overridden to pure black, as the background.
 black   = '#000000'
-red     = '#ff3333'
-green   = '#b8cc52'
-yellow  = '#e7c547'
-blue    = '#36a3d9'
-magenta = '#f07178'
-cyan    = '#95e6cb'
-white   = '#ffffff'
+red     = '#ea6c73'
+green   = '#91b362'
+yellow  = '#f9af4f'      # an orange, in this line of the palette
+blue    = '#53bdfa'
+magenta = '#d2a6ff'      # and a violet; #f07178 is the bright red below
+cyan    = '#90e1c6'
+white   = '#c7c7c7'
 
 # Bright colors
 [colors.bright]
-black   = '#323232'
-red     = '#ff6565'
-green   = '#eafe84'
-yellow  = '#fff779'
-blue    = '#68d5ff'
-magenta = '#ffa3aa'
-cyan    = '#c7fffd'
+black   = '#686868'
+red     = '#f07178'
+green   = '#c2d94c'
+yellow  = '#e8c783'
+blue    = '#59c2ff'
+magenta = '#ddbcff'
+cyan    = '#95e6cb'
 white   = '#ffffff'
+
+# Dim colors, SGR 2. The theme declares a terminal.ansi.dim_* set of its own,
+# so the faint half comes from the palette instead of from Alacritty scaling
+# each normal colour down. foot takes the same eight as dim0-7.
+[colors.dim]
+black   = '#30343d'
+red     = '#ad5c62'
+green   = '#6e9430'
+yellow  = '#b38133'
+blue    = '#3f8ac6'
+magenta = '#926cb8'
+cyan    = '#6ea897'
+white   = '#8f908b'
 
 [cursor]
 style = "block"

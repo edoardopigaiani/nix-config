@@ -2,14 +2,15 @@
  *
  * Passed to swayosd-server by its unit in desktop.nix. This is GTK4 CSS and
  * replaces swayosd's own stylesheet entirely, so every rule it needs is here.
- * The look follows waybar.css: the same "Ayu Dark" palette, square corners, a
- * hairline border in the muted grey and Tamzen at its 8x15 strike for the
- * percentage. GTK4's CSS has no @define-color scoping worth using here, so the
- * colours are written out; waybar.css names them. */
+ * The look is unchanged -- square corners, a hairline border in the muted
+ * grey, Tamzen at its 8x15 strike for the percentage -- and the palette is
+ * "Ayu Classic OLED", the one every other file is on; foot's colors-dark in
+ * terminal.nix is the reference copy. GTK4's CSS has no @define-color scoping
+ * worth using here, so the colours are written out. */
 
 window#osd {
   background: #000000;              /* background */
-  border: 1px solid #5c6773;        /* muted */
+  border: 1px solid #626a73;        /* the theme's UI grey, the hairline */
   border-radius: 0;
 }
 
@@ -20,7 +21,7 @@ window#osd #container {
 /* The icon (from the Adwaita icon theme) and the percentage. */
 window#osd image,
 window#osd label {
-  color: #e6e1cf;                   /* foreground */
+  color: #d9d7d0;                   /* terminal.foreground, as in the bar */
 }
 
 window#osd label {
@@ -47,7 +48,7 @@ window#osd segment {
   min-height: inherit;
   border-radius: 0;
   border: none;
-  background: #253340;              /* overlay */
+  background: #152e3d;              /* the theme's selection, the trough */
 }
 
 window#osd progress,
@@ -55,7 +56,7 @@ window#osd segment.active {
   min-height: inherit;
   border-radius: 0;
   border: none;
-  background: #e6e1cf;              /* foreground, like the label */
+  background: #d9d7d0;              /* like the label */
 }
 
 window#osd segment {

@@ -11,10 +11,10 @@
 // desktop.nix runs exactly that at build time, so a syntax error fails the
 // rebuild instead of dropping you into a black screen.
 //
-// Colours are "Ayu Dark", the same palette as alacritty.toml and the foot
-// block in terminal.nix; alacritty.toml's [colors] is the reference copy. They
-// are written out rather than shared because this is a real KDL file, the same
-// trade-off alacritty.toml already makes.
+// Colours are "Ayu Classic OLED", the palette the whole session is on; the
+// reference copy is the foot block in terminal.nix. They are written out
+// rather than shared because this is a real KDL file, the same trade-off
+// alacritty.toml already makes.
 
 // -------------------------------------------------------------------- input
 input {
@@ -91,24 +91,27 @@ layout {
     // or a border (inside it); using only the ring keeps windows at the size
     // they asked for.
     //
-    // Active is #323232, ayu's ansi bright black ([colors.bright] black in
-    // alacritty.toml) -- the ring is as quiet as a ring can be, at 1.6:1
-    // against the black background.
+    // Active is #30343d, the theme's ansi dim black (foot's dim0) -- the ring
+    // is as quiet as a ring can be, at 1.68:1 against the black background.
+    // It replaces ayu-vim's #323232 at 1.64:1, so the ring is unchanged in
+    // practice; the role-faithful port would have been the new ansi bright
+    // black, #686868, and at 3.77:1 that is a different, much louder ring.
     //
-    // Which is why inactive is fully transparent rather than a darker grey.
-    // There is nothing below #323232 in the palette that stays visible: the
-    // next candidates, #253340 and #0f1419, sit at 1.6:1 and 1.1:1, so the
-    // first is indistinguishable from the active ring and the second from the
+    // Inactive is fully transparent rather than a darker grey. There is
+    // nothing below #30343d in the palette that stays visible: the next
+    // candidates, #1b1f29 and #0a0e14, sit at 1.27:1 and 1.09:1, so the first
+    // is near-indistinguishable from the active ring and the second from the
     // background. With no second grey that works, the ring marks focus by
     // being there at all -- the same move waybar.css makes with the workspace
     // underline. Unfocused windows simply have no outline.
     //
     // If you want every window outlined again, give inactive-color a visible
-    // grey (#253340 was the last one) and lift active-color above it -- #5c6773,
-    // ayu's UI grey, is the one the rest of the session draws borders in.
+    // grey (#1b1f29, the strip grey) and lift active-color above it --
+    // #626a73, the theme's UI grey, is the one the rest of the session draws
+    // borders in, and #686868 above is louder still.
     focus-ring {
         width 2
-        active-color "#323232"
+        active-color "#30343d"
         inactive-color "#00000000"
     }
 
@@ -158,10 +161,12 @@ cursor {
 
 // ------------------------------------------------------------------ overview
 overview {
-    // #0f1419 is ayu's own editor background, the one the terminals override to
-    // pure black. Using it here puts the only surface in the session that wants
-    // to sit just off black on the palette's own value for exactly that.
-    backdrop-color "#0f1419"
+    // #0a0e14 is the theme's editor.active_line, the value it uses for the
+    // one surface that sits just off its background -- which under the OLED
+    // variant is pure black, so there is no darker panel to borrow. The only
+    // surface in the session that wants to be barely off black gets the
+    // palette's own answer to exactly that.
+    backdrop-color "#0a0e14"
 }
 
 // --------------------------------------------------------------- animations

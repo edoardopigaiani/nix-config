@@ -1,9 +1,12 @@
-# Tomorrow Night, the palette of alacritty.toml. Colours are ANSI names so the
-# terminal draws alacritty's exact hex values: no MICRO_TRUECOLOR needed, and
-# it keeps working inside tmux. Bold only on bright* colours: alacritty has
-# draw_bold_text_with_bright_colors = true and would brighten a normal one.
-# 235/241/246 are xterm-256 greys standing in for Tomorrow Night's line
-# highlight and comment greys, which are not in the 16-colour palette.
+# Tomorrow Night's group choices, drawn in whatever palette the terminal is
+# on -- "Ayu Classic OLED" today. Colours are ANSI names, so micro draws the
+# terminal's own hex values: no MICRO_TRUECOLOR needed, and it keeps working
+# inside tmux. Bold only on bright* colours: both terminals brighten bold text
+# through the palette and would lift a normal colour twice.
+# 241/246 are xterm-256 greys standing in for the comment and line-number
+# greys, which are not in the 16-colour palette. 235, the line highlight and
+# the inactive statusline, is one foot redefines (terminal.nix) to the
+# session's strip grey, so those bars match weechat's, tmux's and Neovim's.
 
 color-link default "default,default"
 color-link comment "246"

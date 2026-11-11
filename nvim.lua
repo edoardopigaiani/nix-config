@@ -7,10 +7,13 @@
 vim.g.mapleader = " "
 vim.g.maplocalleader = " "
 
--- Alacritty is truecolour, and tmux passes RGB through for it (terminal-features
--- in terminal.nix), so the colorscheme's hex values arrive as they are.
+-- foot and Alacritty are both truecolour, and tmux passes RGB through for them
+-- (terminal-features in terminal.nix), so the colorscheme's hex values arrive
+-- as they are. ayu_classic is Zed's "Ayu Classic OLED", the palette both
+-- terminals are on, so the editor and its terminal match. It is the only
+-- colorscheme installed (terminal.nix).
 vim.o.termguicolors = true
-vim.cmd.colorscheme("ayu_dark")
+vim.cmd.colorscheme("ayu_classic")
 
 -- ---------------------------------------------------------------- options
 vim.o.number = true -- the current line's number...

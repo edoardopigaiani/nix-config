@@ -28,17 +28,27 @@
 #     gnome-shell. Binding to niri.service scopes them to niri; niri.service
 #     is `BindsTo=graphical-session.target`, so they still stop cleanly.
 #
-# Colours everywhere are "Ayu Dark"; alacritty.toml's [colors] is the reference
-# copy, and every value in this file, in waybar.css, mako.conf, swayosd.css,
-# fuzzel.ini and niri.kdl appears there. console.colors below is the same
-# palette too -- those 16 slots are the ANSI ones.
+# Colours are one palette: "Ayu Classic OLED", the theme Zed is set to
+# (zed-extensions/ayu, themes/ayu.json). foot's colors-dark block in
+# terminal.nix is the reference copy -- it is ported straight from the theme's
+# own keys, and every other file follows it: alacritty.toml, niri.kdl,
+# waybar.css, mako.conf, swayosd.css, fuzzel.ini, swaylock below,
+# console.colors below and Neovim's ayu_classic.lua.
 #
-# Three of the values ayu names by role rather than by ANSI number do most of
-# the work in the chrome, so they are worth knowing by sight: #151a1e is the
-# panel background (mako's notification, swaylock's indicator, waybar's menus),
-# #253340 the selection grey, and #5c6773 the UI grey that the session's
+# Be careful with values carried over from before the move: this config was
+# on ayu-vim's original dark, the same hues at different values (red #ff3333
+# against #ea6c73), and on Flexoki in between. Both Neovim ports are gone and
+# nothing here is on either, so anything not matching the list above is stale.
+#
+# The palette names three greys by role rather than by ANSI number, and those
+# do most of the work in the chrome. #1b1f29 is the strip grey, filling mako's
+# notification, swaylock's indicator and waybar's tooltips and tray menu; foot
+# also puts it on palette entry 235, which is how weechat's, tmux's, micro's
+# and Neovim's bars land on the same value. #152e3d is the theme's selection,
+# for fuzzel's selected row, swayosd's trough and waybar's hover fill -- the
+# value both terminals highlight with. #626a73 is the UI grey the session's
 # borders and hairlines are drawn in. The one exception is niri's focus ring,
-# which is deliberately quieter; niri.kdl says why.
+# deliberately quieter than any of the three; niri.kdl says why.
 
 { config, pkgs, ... }:
 
@@ -60,18 +70,22 @@ let
   # at a fixed 15px, its 8x15 strike: without --font-size swaylock sizes the
   # text from the indicator radius, which would scale the bitmap.
   #
-  # Colours are "Ayu Dark" like everything else. The idle ring is 5c6773, ayu's
-  # UI grey, the same grey as fuzzel's border and the hairlines in waybar and
-  # swayosd. Not 323232, ayu's ansi bright black, which niri's focus ring does
-  # use: on a lock screen the ring is the only thing on a black field and has
-  # to be findable, where niri's sits against window content and is meant to
-  # stay out of the way. 151a1e, filling the indicator, is ayu's panel
-  # background.
+  # Colours are "Ayu Classic OLED", as everywhere else; foot's colors-dark in
+  # terminal.nix is the reference copy. The idle ring is 626a73, the theme's
+  # UI grey, the same hairline fuzzel's border and swayosd's border use. That
+  # it stays findable is the point: it measures 3.83:1 on black, between ayu's
+  # old 5c6773 (3.64:1) and the base-600 this replaces (4.11:1), so the ring
+  # is as visible as it has been through both ports. Not 30343d, the step
+  # niri's focus ring takes: on a lock screen the ring is the only thing on a
+  # black field, where niri's sits against window content and is meant to stay
+  # out of the way. 1b1f29, filling the indicator, is the strip grey, the same
+  # value foot puts on palette entry 235.
   #
-  # The keystroke tick (--key-hl-color) is ayu's ansi green and not its amber
-  # accent, which here is spent on the verifying ring: at the same colour, a
-  # tick appearing while you type would look like the ring having already
-  # flipped to verifying.
+  # The keystroke tick (--key-hl-color) is the ANSI green and not the amber,
+  # which here is spent on the verifying ring: at the same colour, a tick
+  # appearing while you type would look like the ring having already flipped
+  # to verifying. With ayu back the amber is the palette's own accent, so it
+  # takes the verifying role that Flexoki's yellow-400 stood in for.
   #
   # Only swayidle invokes this: `loginctl lock-session` raises logind's Lock
   # signal, swayidle's `lock` event catches it, and Mod+Shift+L in niri.kdl
@@ -86,20 +100,20 @@ let
   lockCommand = pkgs.writeShellScript "lock-screen" ''
     exec ${pkgs.swaylock}/bin/swaylock -f \
       --color 000000 \
-      --inside-color 151a1e \
-      --inside-clear-color 151a1e \
-      --inside-ver-color 151a1e \
-      --inside-wrong-color 151a1e \
-      --ring-color 5c6773 \
-      --ring-clear-color 36a3d9 \
-      --ring-ver-color f29718 \
-      --ring-wrong-color ff3333 \
-      --key-hl-color b8cc52 \
-      --bs-hl-color ff3333 \
-      --text-color e6e1cf \
-      --text-clear-color e6e1cf \
-      --text-ver-color e6e1cf \
-      --text-wrong-color e6e1cf \
+      --inside-color 1b1f29 \
+      --inside-clear-color 1b1f29 \
+      --inside-ver-color 1b1f29 \
+      --inside-wrong-color 1b1f29 \
+      --ring-color 626a73 \
+      --ring-clear-color 53bdfa \
+      --ring-ver-color e6b450 \
+      --ring-wrong-color ea6c73 \
+      --key-hl-color 91b362 \
+      --bs-hl-color ea6c73 \
+      --text-color d9d7d0 \
+      --text-clear-color d9d7d0 \
+      --text-ver-color d9d7d0 \
+      --text-wrong-color d9d7d0 \
       --line-color 00000000 \
       --separator-color 00000000 \
       --indicator-radius 90 \
@@ -273,33 +287,34 @@ in
       "--kb-power 12"
       # Named ANSI colours rather than hex: the Linux VT is a 16-colour
       # terminal and ignores truecolour escapes. console.colors below remaps
-      # those 16 slots to Ayu Dark, so "cyan" here really is #95e6cb.
+      # those 16 slots to Ayu Classic, so "cyan" here really is #90e1c6.
       "--theme 'container=black;border=lightblack;title=white;greet=white;time=cyan;prompt=green;input=white;action=blue;button=yellow'"
     ];
   };
 
-  # The kernel console palette, set to Ayu Dark so the greeter, the TTYs and
-  # the terminals inside the session all draw from one set of colours. Values
-  # are the ANSI slots from alacritty.toml's [colors.normal] and
-  # [colors.bright], in the order the kernel expects and without the leading
-  # '#'. Unlike the Noir Essence port this replaced, ayu gives every bright
-  # slot its own lighter value, so 9-15 no longer repeat 1-7.
+  # The kernel console palette, set to Ayu Classic so the greeter, the TTYs
+  # and the terminals inside the session all draw from one set of colours.
+  # Values are foot's regular0-7 and bright0-7 (terminal.nix), in the order
+  # the kernel expects and without the leading '#'. Slot 0 is black rather
+  # than the theme's #01060e, as in both terminals, and it is also the console
+  # background. Every bright slot has its own lighter value, so 9-15 do not
+  # repeat 1-7.
   console.colors = [
     "000000" # 0  black, and the console background
-    "ff3333" # 1  red
-    "b8cc52" # 2  green
-    "e7c547" # 3  yellow
-    "36a3d9" # 4  blue
-    "f07178" # 5  magenta
-    "95e6cb" # 6  cyan
-    "ffffff" # 7  white
-    "323232" # 8  bright black
-    "ff6565" # 9  bright red
-    "eafe84" # 10 bright green
-    "fff779" # 11 bright yellow
-    "68d5ff" # 12 bright blue
-    "ffa3aa" # 13 bright magenta
-    "c7fffd" # 14 bright cyan
+    "ea6c73" # 1  red
+    "91b362" # 2  green
+    "f9af4f" # 3  yellow, an orange here
+    "53bdfa" # 4  blue
+    "d2a6ff" # 5  magenta, a violet
+    "90e1c6" # 6  cyan
+    "c7c7c7" # 7  white
+    "686868" # 8  bright black
+    "f07178" # 9  bright red
+    "c2d94c" # 10 bright green
+    "e8c783" # 11 bright yellow
+    "59c2ff" # 12 bright blue
+    "ddbcff" # 13 bright magenta
+    "95e6cb" # 14 bright cyan
     "ffffff" # 15 bright white
   ];
 

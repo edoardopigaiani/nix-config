@@ -78,34 +78,48 @@ in
         fortune -s | cowsay
       end
 
-      # Color theme, ported from conf.d/fish_frozen_theme.fish.
+      # Color theme. Ported from conf.d/fish_frozen_theme.fish, whose hex
+      # values (990000 comments, ff0000 errors, 00a6b2 escapes, B3A06D pager
+      # descriptions) belonged to no palette; the roles the theme named are
+      # kept, the colours are "Ayu Classic OLED" like everything else.
       # Applied after fish picks its default theme, so these win.
-      set --global fish_color_autosuggestion 555 brblack
+      #
+      # ANSI names are left wherever the slot itself is the right answer:
+      # fish then draws whatever palette the terminal is on, which keeps the
+      # prompt correct in the TTY as well, where truecolour is ignored. Hex is
+      # used only where the theme has a value that is not an ANSI slot -- the
+      # greys, the amber and the syntax hues -- and each one is followed by a
+      # named fallback, fish's second-argument form, for the 16-colour case.
+      set --global fish_color_autosuggestion 626a73 brblack # the UI grey
       set --global fish_color_cancel -r
       set --global fish_color_command green
-      set --global fish_color_comment 990000
+      set --global fish_color_comment 626a73 brblack # syntax.comment
       set --global fish_color_cwd brblack
       set --global fish_color_cwd_root red
-      set --global fish_color_end 009900
-      set --global fish_color_error ff0000
-      set --global fish_color_escape 00a6b2
+      set --global fish_color_end green
+      set --global fish_color_error d95757 red # the theme's `error`
+      set --global fish_color_escape 95e6cb brcyan # syntax.string.escape
       set --global fish_color_history_current --bold
       set --global fish_color_host normal
       set --global fish_color_host_remote yellow
+      set --global fish_color_operator d9a97a yellow # syntax.operator
       set --global fish_color_normal normal
-      set --global fish_color_operator white
       set --global fish_color_param green
-      set --global fish_color_quote 999900
-      set --global fish_color_redirection 00afff
-      set --global fish_color_search_match white --background=brblack
-      set --global fish_color_selection white --bold --background=brblack
+      set --global fish_color_quote aad94c green # syntax.string
+      set --global fish_color_redirection 59c2ff blue # the bright blue
+      # Black on the amber, as in foot's search box, fuzzel's matches and the
+      # theme's own active match; the selection grey is foot's selection.
+      set --global fish_color_search_match black --background=e6b450
+      set --global fish_color_selection d9d7d0 --bold --background=152e3d
       set --global fish_color_status red
       set --global fish_color_user blue
       set --global fish_color_valid_path --underline
       set --global fish_pager_color_completion
-      set --global fish_pager_color_description B3A06D yellow
+      set --global fish_pager_color_description 707a8c brblack # text.muted
       set --global fish_pager_color_prefix normal --bold --underline
-      set --global fish_pager_color_progress brwhite --background=cyan
+      # The strip grey, so the pager's progress line reads like every other
+      # bar in the session.
+      set --global fish_pager_color_progress d9d7d0 --background=1b1f29
       set --global fish_pager_color_selected_background -r
     '';
   };
@@ -166,20 +180,25 @@ in
       set -g pane-active-border-style 'bg=colour0 fg=colour8'
 
       # bar
-      # colour235 is weechat's title/status bar grey (#262626), which
-      # ayu_dark.lua also uses for Neovim's statusline; only the
-      # background changed, the foreground colours are as they were.
+      # The bar grey is #1b1f29, the palette's strip grey, shared with
+      # weechat's title and status bars and with Neovim's statusline.
+      # It is written as a hex here rather than as colour235: tmux takes
+      # 24-bit values (RGB is on for foot in terminal-features above), so the
+      # bar does not depend on what palette entry 235 happens to hold. weechat
+      # cannot do that -- weechat.conf only takes palette indices -- which is
+      # why colors-dark below redefines 235 to the same value. The foreground
+      # colours are ANSI slots and follow foot's palette on their own.
       set -g status-position bottom
       set -g status-justify centre
-      set -g status-style 'bg=colour235 fg=colour7'
+      set -g status-style 'bg=#282726 fg=colour7'
       # Only the window list: the time is in waybar, the date in its tooltip.
       set -g status-left ""
       set -g status-right ""
 
-      setw -g window-status-current-style 'fg=colour7 bg=colour235'
+      setw -g window-status-current-style 'fg=colour7 bg=#282726'
       setw -g window-status-current-format '#[fg=colour4]> #[fg=colour7]#W#[fg=colour7]'
 
-      setw -g window-status-style 'fg=colour7 bg=colour235'
+      setw -g window-status-style 'fg=colour7 bg=#282726'
       setw -g window-status-format '#[fg=colour8]> #[fg=colour7]#W#[fg=colour7]'
 
       setw -g window-status-bell-style 'fg=colour255 bg=colour4 bold'
@@ -217,7 +236,10 @@ in
   environment.etc."xdg/alacritty/alacritty.toml".source = ./alacritty.toml;
 
   # ------------------------------------------------------------------ foot
-  # A port of alacritty.toml to foot, font included.
+  # A port of alacritty.toml to foot, font included, colours now included
+  # too: both terminals are on Zed's "Ayu Classic OLED", and this block is the
+  # reference copy of it -- alacritty.toml's [colors] follows from here, the
+  # direction having reversed when the palette changed. See colors-dark.
   # The module writes /etc/xdg/foot/foot.ini, which ~/.config/foot/foot.ini
   # overrides. Settings equal to foot's defaults are left out: Ctrl+Shift+C/V,
   # Shift+Insert, Ctrl+0/+/-, Ctrl+Shift+N, Shift+PageUp/Down, middle-click
@@ -240,8 +262,9 @@ in
 
         # Alacritty's draw_bold_text_with_bright_colors: bold regular colours
         # switch to their bright palette entry. Under Noir Essence Dark that
-        # only ever changed black; ayu makes bright lighter than normal in all
-        # eight slots, so bold now shifts colour throughout.
+        # only ever changed black; the Ayu Classic values below, like the
+        # Flexoki steps before them, are measurably lighter in bright than in
+        # regular in all eight slots, so bold shifts colour throughout.
         bold-text-in-bright = "palette-based";
 
         # Alacritty sets TERM=xterm-256color; foot's own entry is more
@@ -276,39 +299,97 @@ in
         show-urls-launch = "Control+Shift+o Control+Shift+h";
       };
 
-      # Ayu Dark, the same values as alacritty.toml's [colors], including the
-      # pure-black background and regular0.
+      # Zed's "Ayu Classic OLED" (zed-extensions/ayu, themes/ayu.json), the
+      # theme the editor is set to, ported slot for slot from the theme's own
+      # terminal.ansi.* keys.
+      #
+      # Note this is not ayu-vim's original dark, which this config was on
+      # until the move (red #ff3333, green #b8cc52): the Zed theme follows the
+      # newer ayu-colors (red #ea6c73, green #91b362) -- softer, and uniformly
+      # higher contrast on black, nothing in the regular half falling below
+      # 6.89:1 against the 4.85:1 floor of the Flexoki port in between.
+      # Everything else has since followed this block, so it is the one place
+      # the palette is defined.
+      #
+      # The OLED variant specifies pure black for the background, so the
+      # override every theme before it needed here is gone. regular0 still
+      # follows the background instead of taking the theme's own ansi black
+      # (#01060e, a 1.03:1 glow), so a black cell cannot be told from an empty
+      # one.
+      #
+      # Roles foot has and a Zed theme does not are derived from the nearest
+      # key it does define, named per line below. ayu's amber accent (#e6b450,
+      # the theme's focus rings and active search match) does the work the
+      # Flexoki port had to spend yellow-400 on, Flexoki declaring no single
+      # accent.
       colors-dark = {
-        background = "000000";
-        foreground = "e6e1cf";
-        cursor = "000000 f29718"; # text, then cursor
+        background = "000000"; # the theme's own value, this being the OLED cut
+        foreground = "d9d7d0";
+        # Black on the accent, as the pre-Flexoki ayu config had it: it keeps
+        # the character under the block readable, which cursor == foreground
+        # would not.
+        cursor = "000000 e6b450"; # text, then cursor
         # foot has no CellForeground; the default foreground is what nearly
         # every selected cell would show anyway.
-        selection-foreground = "e6e1cf";
-        selection-background = "253340";
-        # Alacritty's hint and search-match colours.
-        jump-labels = "000000 f29718";
-        search-box-match = "000000 f29718";
-        search-box-no-match = "000000 ff3333";
-        scrollback-indicator = "e6e1cf 151a1e";
-        urls = "36a3d9";
+        selection-foreground = "d9d7d0";
+        # Zed states the selection as players[0].selection, #59c2ff at 24%
+        # alpha; foot wants an opaque colour, so this is that blend on black.
+        selection-background = "152e3d";
+        jump-labels = "000000 e6b450";
+        search-box-match = "000000 e6b450"; # search.active_match_background
+        search-box-no-match = "000000 d95757"; # the theme's `error`
+        # A strip grey one step off black, shared with the weechat bars below:
+        # the theme's own surfaces (#050608) sit too close to the background
+        # to read as a panel at all. #1b1f29 is its hidden/ignored border,
+        # the darkest tone it draws that is still visible on black.
+        scrollback-indicator = "d9d7d0 1b1f29";
+        urls = "59c2ff"; # link_text.hover
 
-        regular0 = "000000";
-        regular1 = "ff3333";
-        regular2 = "b8cc52";
-        regular3 = "e7c547";
-        regular4 = "36a3d9";
-        regular5 = "f07178";
-        regular6 = "95e6cb";
-        regular7 = "ffffff";
-        bright0 = "323232";
-        bright1 = "ff6565";
-        bright2 = "eafe84";
-        bright3 = "fff779";
-        bright4 = "68d5ff";
-        bright5 = "ffa3aa";
-        bright6 = "c7fffd";
+        # weechat draws its title and status bars on palette entry 235
+        # (weechat.conf's status.color_bg and title.color_bg), and weechat
+        # takes an index, not a hex -- so the only way to move that grey off
+        # the xterm default of #262626 is to redefine the entry here.
+        # darkblue.micro reads the same entry, for micro's cursor-line,
+        # color-column and inactive statusline, so both move together. The
+        # strip grey above replaces it, slightly darker and ayu-tinted. 235
+        # sits in the 232..255 greyscale ramp; any program walking that ramp
+        # sees this one step shifted. waybar and mako still draw their own
+        # bars on Flexoki's base-900 (#282726, desktop.nix), so the greys no
+        # longer agree to the byte; both are near-neutral at that lightness,
+        # and setting this back to 282726 makes them identical again.
+        "235" = "1b1f29";
+
+        regular0 = "000000"; # the background; the theme's ansi black is 01060e
+        regular1 = "ea6c73";
+        regular2 = "91b362";
+        regular3 = "f9af4f"; # ayu's yellow is an orange
+        regular4 = "53bdfa";
+        regular5 = "d2a6ff"; # and its magenta a violet
+        regular6 = "90e1c6";
+        regular7 = "c7c7c7";
+        bright0 = "686868"; # 3.77:1, so bold black is visible at all
+        bright1 = "f07178";
+        bright2 = "c2d94c";
+        bright3 = "e8c783";
+        bright4 = "59c2ff";
+        bright5 = "ddbcff";
+        bright6 = "95e6cb";
         bright7 = "ffffff";
+
+        # SGR 2 (faint). Unset, foot blends the current colour towards black
+        # by dim-amount; the theme declares a terminal.ansi.dim_* set of its
+        # own, so the faint half comes from the palette instead. These only
+        # apply to text already on a regularN colour, which is where dim text
+        # lands in practice. dim0 is lighter than regular0 rather than darker,
+        # black having nothing left to dim towards.
+        dim0 = "30343d";
+        dim1 = "ad5c62";
+        dim2 = "6e9430";
+        dim3 = "b38133";
+        dim4 = "3f8ac6";
+        dim5 = "926cb8";
+        dim6 = "6ea897";
+        dim7 = "8f908b";
       };
     };
   };
@@ -342,21 +423,17 @@ in
         gitsigns-nvim
         which-key-nvim
         nvim-lspconfig # server definitions for vim.lsp.enable
-        # The Ayu Dark port, as a one-file plugin providing
-        # :colorscheme ayu_dark. nvim.lua selects it; it is the same palette
-        # alacritty.toml and foot are set to.
-        (pkgs.linkFarm "ayu-dark-nvim" [
+        # The Ayu Classic port, as a one-file plugin providing
+        # :colorscheme ayu_classic. nvim.lua selects it; it is the palette
+        # both terminals, Zed and the session chrome are on, so Neovim matches
+        # whatever it is running inside. The only colorscheme installed: the
+        # ports of the themes before it (flexoki, ayu_dark, noir_essence) were
+        # kept for comparison until the whole config was on one palette, and
+        # were deleted once it was. They are in the history of this file.
+        (pkgs.linkFarm "ayu-classic-nvim" [
           {
-            name = "colors/ayu_dark.lua";
-            path = ./ayu_dark.lua;
-          }
-        ])
-        # The previous theme, kept installed so :colorscheme noir_essence
-        # still works for comparison.
-        (pkgs.linkFarm "noir-essence-nvim" [
-          {
-            name = "colors/noir_essence.lua";
-            path = ./noir_essence.lua;
+            name = "colors/ayu_classic.lua";
+            path = ./ayu_classic.lua;
           }
         ])
         # Neovim already bundles c, lua, markdown, query, vim and vimdoc.

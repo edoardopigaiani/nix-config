@@ -9,26 +9,33 @@
  * only the subset of selectors GTK implements. @define-color is the GTK way
  * of naming a colour once.
  *
- * Palette: "Ayu Dark", a copy of alacritty.toml's [colors] -- that file is the
- * reference copy for the whole tree, and every value below appears in it. The
- * three greys are the ones ayu names by role rather than by ANSI number, which
- * is why their comments say where they come from. The whole palette is kept,
- * not only the slots in use:
- * @green, @yellow, @blue, @magenta and @cyan currently have no rule of their
- * own. */
+ * Palette: "Ayu Classic OLED", the theme Zed is set to, by way of foot's
+ * colors-dark block in terminal.nix -- the reference copy every file in the
+ * session now follows. The bar was the last thing split across two palettes
+ * and is no longer: @foreground is the terminal's foreground, the greys are
+ * the theme's own, and the eight hues are its ANSI slots.
+ *
+ * @foreground is the only colour on the bar most of the time: every module
+ * inherits it and nothing else is drawn unless a state fires. The greys, the
+ * amber and the red show in the tray menu, the tooltips, the hover fill and
+ * the two battery warnings. The whole palette is kept, not only the slots in
+ * use: @green, @yellow, @magenta, @blue and @cyan currently have no rule of
+ * their own. Note @yellow and @orange are both ambers in this palette, closer
+ * to each other than ayu-vim's #e7c547 and #f29718 were -- it costs nothing
+ * while @yellow is unused, but pick @orange, the accent, for anything new. */
 
-@define-color background  #000000;  /* pure black, == terminal bg (ayu: #0f1419) */
-@define-color surface     #151a1e;  /* ayu's panel background */
-@define-color overlay     #253340;  /* editor.selectionBackground */
-@define-color muted       #5c6773;  /* ayu's UI grey: comments, inactive tabs */
-@define-color foreground  #e6e1cf;
-@define-color red         #ff3333;
-@define-color green       #b8cc52;
-@define-color yellow      #e7c547;  /* the ANSI slot, not the accent below */
-@define-color orange      #f29718;  /* ayu's amber accent: the terminal cursor */
-@define-color blue        #36a3d9;
-@define-color magenta     #f07178;
-@define-color cyan        #95e6cb;
+@define-color background  #000000;  /* the theme's own, this being the OLED cut */
+@define-color surface     #1b1f29;  /* the strip grey, foot's palette entry 235 */
+@define-color overlay     #152e3d;  /* the theme's selection, as in both terminals */
+@define-color muted       #626a73;  /* the theme's UI grey: comments, line numbers */
+@define-color foreground  #d9d7d0;  /* terminal.foreground, the white of the bar */
+@define-color red         #ea6c73;
+@define-color green       #91b362;
+@define-color yellow      #f9af4f;  /* the ANSI slot, an orange here */
+@define-color orange      #e6b450;  /* ayu's amber accent: the terminal cursor */
+@define-color blue        #53bdfa;
+@define-color magenta     #d2a6ff;
+@define-color cyan        #90e1c6;
 
 * {
   /* Tamzen, the same face and 8x15 strike as Alacritty and foot, so the bar
