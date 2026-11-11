@@ -182,11 +182,6 @@
   # List packages installed in system profile.
   # You can use https://search.nixos.org/ to find more packages (and options).
   environment.systemPackages = with pkgs; [
-    # Electron picks its secret store from XDG_CURRENT_DESKTOP and only knows
-    # GNOME/KDE-like values; under niri it finds none and offers "weaker
-    # encryption". gnome-keyring (desktop.nix) is running and unlocked at
-    # login, so point VSCode at it explicitly.
-    (vscode.override { commandLineArgs = "--password-store=gnome-libsecret"; })
     claude-code
     cryptomator
     vlc
@@ -202,6 +197,7 @@
     glow
     zed-editor
     btop
+    apostrophe
   ];
 
   programs.nix-ld.enable = true;
