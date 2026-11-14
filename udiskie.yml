@@ -1,0 +1,21 @@
+# udiskie, the automounter that replaces GNOME's gvfs handling of USB sticks.
+# desktop.nix starts it with `-c ${./udiskie.yml}`: this file exists only to
+# silence the popups it would otherwise draw through mako on every plug and
+# unplug. udiskie has no command-line flag for single events -- --no-notify is
+# all-or-nothing -- and its config file is the documented way to pick.
+#
+# A timeout of `false` disables an event (notify.py: an event is enabled when
+# its timeout is not None and not False). The four below are the ones a USB
+# device triggers by itself:
+#
+#   device_added / device_removed   the kernel seeing the device appear or go
+#   device_mounted / device_unmounted   udiskie's automount acting on it
+#
+# Everything not listed keeps udiskie's default, which matters for job_failed:
+# that one still notifies, so a stick that fails to mount says so instead of
+# silently not showing up.
+notifications:
+  device_added: false
+  device_removed: false
+  device_mounted: false
+  device_unmounted: false
