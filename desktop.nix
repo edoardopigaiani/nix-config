@@ -383,12 +383,17 @@ in
 
   # ------------------------------------------------------------- automount
   # GNOME mounted USB sticks through gvfs without being asked; udiskie is the
-  # standalone equivalent. No tray icon (--no-tray): it still automounts and
-  # notifies, and unmounting is `udiskie-umount <path>` or yazi.
+  # standalone equivalent. No tray icon (--no-tray): it still automounts
+  # silently, and unmounting is `udiskie-umount <path>` or yazi.
+  #
+  # The config file is passed by store path rather than put in /etc or
+  # ~/.config: udiskie takes -c, so neither of the usual two mechanisms is
+  # needed. It carries nothing but the notification settings -- udiskie.yml
+  # says which and why -- and replaces the --no-config this unit used to pass.
   systemd.user.services.udiskie = sessionService // {
     description = "Removable disk automounter";
     serviceConfig = {
-      ExecStart = "${pkgs.udiskie}/bin/udiskie --no-tray --no-config";
+      ExecStart = "${pkgs.udiskie}/bin/udiskie --no-tray -c ${./udiskie.yml}";
       Restart = "on-failure";
     };
   };
