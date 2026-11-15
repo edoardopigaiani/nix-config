@@ -38,14 +38,30 @@
 @define-color cyan        #90e1c6;
 
 * {
-  /* Tamzen, the same face and 8x15 strike as Alacritty and foot, so the bar
-   * and the terminal below it read as one surface. It works here because the
-   * modules are plain-text labels (B:, C/I, the clock) with no icon glyphs,
-   * and because Tamzen ships OTB files, the only bitmap format Pango still
-   * loads. The size must stay 15px: a bitmap is only sharp at its own strike
-   * sizes (9 and 12-16 and 20px), and anything else gets scaled. */
-  font-family: "Tamzen", monospace;
-  font-size: 15px;
+  /* JetBrains Mono at 12px, the same face and size as ghostty (9 pt there,
+   * which it turns into 12 px at this display's scale), so the bar and the
+   * terminal below it read as one surface. Alacritty and foot are still on
+   * Tamzen's 8x15 strike, so the bar no longer matches those two.
+   *
+   * CSS cannot pick a font format, but fontconfig already prefers the OTF
+   * (CFF) build, and CFF is what the stem darkening set on the waybar unit in
+   * desktop.nix needs -- that env var is what keeps the weight here equal to
+   * ghostty's.
+   *
+   * Antialiasing and hinting are not ours to set from CSS: Pango takes them
+   * from the GTK gsettings, which desktop.nix leaves at the schema defaults
+   * of greyscale and slight. Greyscale matches ghostty; slight hinting does
+   * not, ghostty now loading glyphs unhinted the way macOS does. Closing
+   * that last gap would mean font-hinting = "none" in the dconf block, which
+   * is global to every GTK app, so it is deliberately not done here.
+   *
+   * The modules stay plain-text labels (B:, V:, L:, N:, Idle). Note that is
+   * now a choice rather than a limit: Tamzen covered only ASCII, but the
+   * fontconfig rule in terminal.nix appends JetBrainsMono Nerd Font behind
+   * this family, so icon glyphs would in fact resolve if a format asked for
+   * them. */
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12px;
   /* GTK draws a rounded shadow on tooltips and menus otherwise. */
   border: none;
   border-radius: 0;

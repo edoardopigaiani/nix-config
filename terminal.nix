@@ -81,7 +81,9 @@ let
   };
 
   # Bitmap fonts with exact advance widths in their OTB files, which Pango
-  # (waybar, mako) otherwise spaces too wide: Tamzen by 1 px per glyph,
+  # (swayosd, the last Pango consumer left on a bitmap now that waybar, mako,
+  # swaylock and fuzzel are all on JetBrains Mono) spaces too wide otherwise:
+  # Tamzen by 1 px per glyph,
   # Cozette by half a pixel, rounded unevenly. bitmap-otb-advance.py has the
   # why; it reads each glyph's width from its own bitmap. postFixup rather
   # than postInstall: Tamzen's own installPhase does not run the install
@@ -522,17 +524,18 @@ in
   fonts.packages = with pkgs; [
     # Family names matter here, because alacritty.toml selects by family and
     # style, and one package can register several families.
-    tamzenFixed # "Tamzen", the font of Alacritty, foot, waybar, fuzzel and
-    # swaylock: bitmap, Regular and Bold at 9 and 12-16 and 20px, as both PCF
-    # and OTB (the only bitmap format Pango, and so waybar, still loads).
+    tamzenFixed # "Tamzen", the font of Alacritty, foot and swayosd:
+    # bitmap, Regular and Bold at 9 and 12-16 and 20px, as both PCF
+    # and OTB (the only bitmap format Pango, and so swayosd, still loads).
     # The OTB advances are corrected, see tamzenFixed above. Also registers
     # "TamzenForPowerline", not in use.
     cozetteFixed # "Cozette", the Alacritty font before that: bitmap, 13px
     # ("Medium") and 26px ("HiDpi") only, no bold. Not in use. The OTB
     # advances are corrected, as for Tamzen. Also registers the scalable
     # "CozetteVector", which is a different family and is not in use.
-    jetbrains-mono # "JetBrains Mono", the font of ghostty and mako (and a
-    # previous Alacritty and foot one). Ships both OTF (CFF) and TTF
+    jetbrains-mono # "JetBrains Mono", the font of ghostty, waybar, mako,
+    # swaylock and fuzzel -- everything in the session that is not a
+    # bitmap -- and a previous Alacritty and foot one. Ships OTF (CFF) and TTF
     # builds; fontconfig prefers the OTF one. Has box drawing and the classic
     # powerline arrows, but no Nerd Font icons, braille or heavy check mark,
     # so those fall back.
@@ -571,8 +574,36 @@ in
           <string>JetBrainsMono Nerd Font</string>
         </edit>
       </match>
+      <match target="font">
+        <test qual="any" name="family"><string>JetBrains Mono</string></test>
+        <edit name="hintstyle" mode="assign"><const>hintnone</const></edit>
+      </match>
+      <match target="font">
+        <test qual="any" name="family"><string>JetBrainsMono Nerd Font Mono</string></test>
+        <edit name="hintstyle" mode="assign"><const>hintnone</const></edit>
+      </match>
     </fontconfig>
   '';
+
+  # The two hintstyle rules above are what put mako and swaylock on ghostty's
+  # unhinted rendering, the last thing that still differed. Neither links GTK
+  # -- both are cairo and FreeType straight onto a layer surface -- so they
+  # take hinting from fontconfig, where fonts.fontconfig.hinting.style leaves
+  # it at "slight" for everything. The rules are scoped to this one family
+  # rather than set globally, which is why they are here and not a change to
+  # that option: Tamzen is a bitmap and has no hinting to speak of, and the
+  # Adwaita faces the GTK apps use are meant to stay as GNOME renders them.
+  #
+  # target="font" and not "pattern", because hintstyle is a property of the
+  # face that came back from matching rather than of the request. Both
+  # families are listed since the pattern rule above makes the Nerd Font the
+  # fallback for this text: without the second rule an icon inside a
+  # notification would come out hinted while the words around it did not.
+  #
+  # waybar reads the same fontconfig, so it follows along; being GTK its own
+  # settings could in principle override, which would only put it back where
+  # it already was. ghostty is unaffected either way -- it sets FreeType's
+  # load flags itself, in ghostty.config.
 
   # ---------------------------------------------------------------- packages
   environment.systemPackages = with pkgs; [

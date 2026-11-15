@@ -62,13 +62,45 @@ let
     cp ${./niri.kdl} $out
   '';
 
+  # --------------------------------------------------------------- fuzzel
+  # Wrapped for one variable: the stem darkening that puts its JetBrains Mono
+  # at the weight ghostty, waybar, mako and swaylock draw. fuzzel goes through
+  # fcft onto FreeType directly -- it links no GTK and runs under no systemd
+  # unit -- so neither a gsettings key nor a drop-in can carry it, and a
+  # wrapper is the only hook left. niri spawns the launcher as a bare
+  # "fuzzel" off PATH (niri.kdl, Mod+D and the Mod+V clipboard pipe), which
+  # is what makes this wrapper the one that runs, the same way foot's and
+  # ghostty's resolve in terminal.nix. The value is copied from
+  # ghosttyWrapped there, where the curve is explained and where it should be
+  # changed.
+  fuzzelWrapped = pkgs.symlinkJoin {
+    name = "fuzzel-${pkgs.fuzzel.version}";
+    paths = [ pkgs.fuzzel ];
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    postBuild = ''
+      wrapProgram $out/bin/fuzzel \
+        --set FREETYPE_PROPERTIES \
+          "cff:no-stem-darkening=0 cff:darkening-parameters=500,500,1000,400,1667,300,2333,0"
+    '';
+  };
+
   # ------------------------------------------------------------- swaylock
   # swaylock's own config file lives under its Nix store prefix, which is
   # read-only and not on any search path that matters, so the theme is passed
   # as flags instead. Colours are RRGGBB with no leading '#', which is
-  # swaylock's format, and 00000000 is fully transparent. The font is Tamzen
-  # at a fixed 15px, its 8x15 strike: without --font-size swaylock sizes the
-  # text from the indicator radius, which would scale the bitmap.
+  # swaylock's format, and 00000000 is fully transparent. The font is
+  # JetBrains Mono at 12, matching ghostty, waybar and mako; without
+  # --font-size swaylock sizes the text from the indicator radius instead.
+  #
+  # That 12 is pixels, not points: swaylock hands the number to
+  # cairo_set_font_size, which is in user-space units, and the surface is
+  # unscaled here. It selects the face with cairo_select_font_face -- the toy
+  # API, so --font takes a bare family name and not a Pango description, and
+  # fontconfig resolves it to the OTF (CFF) build that the stem darkening
+  # exported below needs. The export is the same curve as ghostty's, and it
+  # has to be in this script rather than on a unit because swayidle execs
+  # this file; it was dropped when swaylock went back to Tamzen, a bitmap
+  # FreeType antialiases nothing of, and is live again now.
   #
   # Colours are "Ayu Classic OLED", as everywhere else; foot's colors-dark in
   # terminal.nix is the reference copy. The idle ring is 626a73, the theme's
@@ -98,6 +130,7 @@ let
   # then rejected the unit for "Unbalanced quoting" and swayidle never ran --
   # no idle lock, no lock before suspend, and Mod+Shift+L did nothing.
   lockCommand = pkgs.writeShellScript "lock-screen" ''
+    export FREETYPE_PROPERTIES="cff:no-stem-darkening=0 cff:darkening-parameters=500,500,1000,400,1667,300,2333,0"
     exec ${pkgs.swaylock}/bin/swaylock -f \
       --color 000000 \
       --inside-color 1b1f29 \
@@ -118,8 +151,8 @@ let
       --separator-color 00000000 \
       --indicator-radius 90 \
       --indicator-thickness 8 \
-      --font "Tamzen" \
-      --font-size 15
+      --font "JetBrains Mono" \
+      --font-size 12
   '';
 
   # --------------------------------------------------------- waybar config
@@ -127,10 +160,12 @@ let
   # Nix would corrupt -- the same split terminal.nix makes between the foot
   # module and alacritty.toml.
   #
-  # Note what is NOT here: glyph icons. The bar's font, Tamzen, covers only
-  # ASCII and part of Latin-1, so icon-based formats would render as tofu
-  # boxes or fall back to another font. The text labels below are in the
-  # style of the tmux status bar.
+  # Note what is NOT here: glyph icons -- and that it is now a choice rather
+  # than a limit. Tamzen covered only ASCII and part of Latin-1, so icon
+  # formats really would have drawn tofu; the bar is on JetBrains Mono now,
+  # with the Nerd Font appended behind it by the fontconfig rule in
+  # terminal.nix, so they would resolve. The text labels below are kept
+  # because they are in the style of the tmux status bar.
   #
   # No module here spawns anything on click, so none of them needs an absolute
   # store path: waybar runs as a systemd user service whose PATH does not
@@ -325,6 +360,15 @@ in
     # every graphical session.
     systemd.target = "niri.service";
   };
+  # Stem darkening for the bar's JetBrains Mono, the same macOS-like weight
+  # ghostty draws. The value is copied from ghosttyWrapped in terminal.nix,
+  # which is where the curve is explained and where it should be changed; the
+  # two have to agree or the bar and the terminal under it come out at
+  # different weights. FreeType applies it to CFF outlines only, which is the
+  # build fontconfig picks for this family. waybar runs as a systemd user
+  # service, so the variable goes on the unit rather than in a wrapper.
+  systemd.user.services.waybar.environment.FREETYPE_PROPERTIES =
+    "cff:no-stem-darkening=0 cff:darkening-parameters=500,500,1000,400,1667,300,2333,0";
   environment.etc."xdg/waybar/config".source = waybarConfig;
   environment.etc."xdg/waybar/style.css".source = ./waybar.css;
 
@@ -336,9 +380,15 @@ in
   # is more correct than a hand-written one); only the target is retargeted.
   # Its config cannot live in /etc, so it is linked into ~/.config -- which
   # also means mako finds it when D-Bus activates it rather than systemd.
-  # FREETYPE_PROPERTIES: stem darkening for its JetBrains Mono.
+  # FREETYPE_PROPERTIES: stem darkening for its JetBrains Mono, on the same
+  # curve ghostty and waybar draw. The value is copied from ghosttyWrapped in
+  # terminal.nix, which is where it is explained and where it should be
+  # changed; the three have to agree or notifications come out at a different
+  # weight from the bar and the terminal they sit over. mako links no GTK --
+  # it is cairo and pango straight onto a layer surface -- so this is the
+  # whole of what governs its weight.
   systemd.user.services.mako = sessionService // {
-    environment.FREETYPE_PROPERTIES = "cff:no-stem-darkening=0";
+    environment.FREETYPE_PROPERTIES = "cff:no-stem-darkening=0 cff:darkening-parameters=500,500,1000,400,1667,300,2333,0";
   };
 
   systemd.tmpfiles.rules =
@@ -404,10 +454,17 @@ in
   # The image is read from ~/Pictures at runtime rather than copied into the
   # repo, which is public. -m fill scales it to cover the screen, cropping
   # rather than letterboxing.
+  #
+  # The double quotes around the path are load-bearing: this file name has a
+  # space in it, and systemd splits ExecStart on whitespace, so unquoted it
+  # would reach swaybg as two arguments and the wallpaper would silently not
+  # appear. Specifiers are expanded inside quotes, so %h still resolves --
+  # verified by running the quoted form as a unit and having stat(1) report
+  # one argument and the expanded home. Do not "tidy" them away.
   systemd.user.services.swaybg = sessionService // {
     description = "Wallpaper";
     serviceConfig = {
-      ExecStart = "${pkgs.swaybg}/bin/swaybg -m fill -c '#000000' -i %h/Pictures/wallhaven-og7p79.jpg";
+      ExecStart = "${pkgs.swaybg}/bin/swaybg -m fill -c '#000000' -i \"%h/Pictures/wallhaven-mlrd9m (Edited).jpg\"";
       Restart = "on-failure";
     };
   };
@@ -658,7 +715,7 @@ in
 
   # -------------------------------------------------------------- packages
   environment.systemPackages = with pkgs; [
-    fuzzel # launcher (Mod+D)
+    fuzzelWrapped # launcher (Mod+D), wrapped for stem darkening
     mako # notification daemon; also provides makoctl
     swaylock # lock screen, themed in lockCommand above
     swayidle # idle timeouts, see the unit above
