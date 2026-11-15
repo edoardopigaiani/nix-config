@@ -43,6 +43,43 @@ let
     '';
   };
 
+  # The same wrapper for ghostty, where it is not inert: ghostty.config puts
+  # JetBrains Mono's OTF build first, and CFF outlines are the only kind
+  # FreeType darkens. Ghostty has a font-thicken option of its own, but it is
+  # macOS-only (CoreText), so on Linux this env var is the whole mechanism.
+  # The upstream package already binary-wraps bin/ghostty; wrapProgram moves
+  # that aside to .ghostty-wrapped_, the suffix makeWrapper picks when the
+  # obvious name is taken, so the two wrappers nest rather than collide.
+  #
+  # darkening-parameters goes further than the bare no-stem-darkening=0 foot
+  # gets, because FreeType's default curve is deliberately conservative and
+  # macOS pushes harder. The four pairs are (stem width, darkening amount),
+  # both in 1/1000 em, interpolated between and tapering to nothing for wide
+  # stems; the default is 500,400,1000,275,1667,275,2333,0, and this lifts
+  # only the thin-stem end to 500, the ceiling.
+  #
+  # Two things measured rather than assumed, rendering the alphanumerics
+  # through FreeType 2.14.3 and summing coverage:
+  #   - 500 really is the ceiling. At 550 FreeType rejects the whole property
+  #     and silently falls back to its default curve -- same ink as if the
+  #     line were not here -- so a typo upward fails quietly, not loudly.
+  #   - The taper is why the curve is not simply flat at 500. Flat gives more
+  #     weight at 12 px (445049 ink against 410576) but also +22% at 24 px,
+  #     so zooming in with Ctrl+plus would turn text blobby. Tapered, 24 px
+  #     comes out at 1216551 against the default's 1216493: unchanged where
+  #     it should be, +8% at the size actually in use.
+  # Dropping the thin-stem 500 back to 400 restores stock FreeType weight.
+  ghosttyWrapped = pkgs.symlinkJoin {
+    name = "ghostty-${pkgs.ghostty.version}";
+    paths = [ pkgs.ghostty ];
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    postBuild = ''
+      wrapProgram $out/bin/ghostty \
+        --set FREETYPE_PROPERTIES \
+          "cff:no-stem-darkening=0 cff:darkening-parameters=500,500,1000,400,1667,300,2333,0"
+    '';
+  };
+
   # Bitmap fonts with exact advance widths in their OTB files, which Pango
   # (waybar, mako) otherwise spaces too wide: Tamzen by 1 px per glyph,
   # Cozette by half a pixel, rounded unevenly. bitmap-otb-advance.py has the
@@ -141,6 +178,10 @@ in
     extraConfig = ''
       set -as terminal-features ",alacritty*:RGB"
       set -as terminal-features ",foot*:RGB"
+      # Ghostty's TERM is xterm-ghostty, so the xterm* entry tmux already
+      # knows does not cover it; without this the bar's hex colours below are
+      # quantised to the 256-colour cube.
+      set -as terminal-features ",xterm-ghostty:RGB"
 
       # remap prefix from 'C-b' to 'C-a'
       unbind C-b
@@ -237,9 +278,10 @@ in
 
   # ------------------------------------------------------------------ foot
   # A port of alacritty.toml to foot, font included, colours now included
-  # too: both terminals are on Zed's "Ayu Classic OLED", and this block is the
-  # reference copy of it -- alacritty.toml's [colors] follows from here, the
-  # direction having reversed when the palette changed. See colors-dark.
+  # too: all three terminals are on Zed's "Ayu Classic OLED", and this block
+  # is the reference copy of it -- alacritty.toml's [colors] follows from
+  # here, as does ghostty.config, the direction having reversed when the
+  # palette changed. See colors-dark.
   # The module writes /etc/xdg/foot/foot.ini, which ~/.config/foot/foot.ini
   # overrides. Settings equal to foot's defaults are left out: Ctrl+Shift+C/V,
   # Shift+Insert, Ctrl+0/+/-, Ctrl+Shift+N, Shift+PageUp/Down, middle-click
@@ -394,18 +436,35 @@ in
     };
   };
 
-  # ---------------------------------------------------------------- micro
-  # micro only reads user colorschemes from ~/.config/micro/colorschemes, so the
-  # Alacritty-matching scheme is linked there. Selecting it is left to micro
-  # (`set colorscheme darkblue`), which keeps the choice in its own mutable
-  # settings.json.
+  # ------------------------------------------------- micro & ghostty files
+  # Two programs whose config neither /etc nor a command-line flag can reach,
+  # so the files are linked into ~/.config -- the mechanism desktop.nix uses
+  # for mako, rather than the /etc/xdg one foot and alacritty get.
+  #
+  # micro only reads user colorschemes from ~/.config/micro/colorschemes, so
+  # the Alacritty-matching scheme is linked there. Selecting it is left to
+  # micro (`set colorscheme darkblue`), which keeps the choice in its own
+  # mutable settings.json.
+  #
+  # ghostty has no system-wide path at all: it reads only
+  # $XDG_CONFIG_HOME/ghostty/config.ghostty and ignores XDG_CONFIG_DIRS, so
+  # /etc/xdg would be dead. ghostty.config holds the port itself, setting by
+  # setting against the programs.foot block above; its last line pulls in an
+  # optional ~/.config/ghostty/user.ghostty, which gives back the
+  # hand-editable override that linking over the real config path would
+  # otherwise cost. Ghostty reloads it on Ctrl+Shift+comma. The package is
+  # ghosttyWrapped from the let block, installed in systemPackages below.
   systemd.tmpfiles.rules =
     let
-      dir = "${config.users.users.edo.home}/.config/micro/colorschemes";
+      home = config.users.users.edo.home;
+      microDir = "${home}/.config/micro/colorschemes";
+      ghosttyDir = "${home}/.config/ghostty";
     in
     [
-      "d ${dir} 0755 edo users -"
-      "L+ ${dir}/darkblue.micro - - - - ${./darkblue.micro}"
+      "d ${microDir} 0755 edo users -"
+      "L+ ${microDir}/darkblue.micro - - - - ${./darkblue.micro}"
+      "d ${ghosttyDir} 0755 edo users -"
+      "L+ ${ghosttyDir}/config.ghostty - - - - ${./ghostty.config}"
     ];
 
   # -------------------------------------------------------------- neovim
@@ -472,19 +531,21 @@ in
     # ("Medium") and 26px ("HiDpi") only, no bold. Not in use. The OTB
     # advances are corrected, as for Tamzen. Also registers the scalable
     # "CozetteVector", which is a different family and is not in use.
-    jetbrains-mono # "JetBrains Mono", the font of mako (and a previous
-    # Alacritty and foot one). Ships both OTF (CFF) and TTF
+    jetbrains-mono # "JetBrains Mono", the font of ghostty and mako (and a
+    # previous Alacritty and foot one). Ships both OTF (CFF) and TTF
     # builds; fontconfig prefers the OTF one. Has box drawing and the classic
     # powerline arrows, but no Nerd Font icons, braille or heavy check mark,
     # so those fall back.
     nerd-fonts.jetbrains-mono # The same font patched with the Nerd Font
     # icons, registered as three separate families: "JetBrainsMono Nerd
     # Font", "... Nerd Font Mono" (icons forced to one cell) and "... Nerd
-    # Font Propo" (proportional). Not selected directly: the fontconfig rule
-    # below puts it right behind JetBrains Mono, so the icon glyphs JetBrains
-    # Mono lacks come from it when falling back. It ships TTF only, which is why the primary font stays the plain
-    # OTF build -- FreeType's stem darkening, the macOS-like weight, applies
-    # to CFF outlines only.
+    # Font Propo" (proportional). Reached two ways: ghostty.config names the
+    # Mono family outright as its second font-family, ghostty doing its own
+    # fallback rather than fontconfig's, and the rule below puts it right
+    # behind JetBrains Mono for everything that does go through fontconfig,
+    # mako included. It ships TTF only, which is why the primary font stays
+    # the plain OTF build -- FreeType's stem darkening, the macOS-like
+    # weight, applies to CFF outlines only.
     terminus_font_ttf # "Terminus (TTF)", the Alacritty font before that
     terminus_font # Terminus bitmap (PCF/OTB) variants, 12px to 32px
   ];
@@ -516,6 +577,7 @@ in
   # ---------------------------------------------------------------- packages
   environment.systemPackages = with pkgs; [
     alacrittyWrapped
+    ghosttyWrapped # also what puts xterm-ghostty on TERMINFO_DIRS
     micro
     wget
     git
