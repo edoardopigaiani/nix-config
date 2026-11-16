@@ -30,16 +30,26 @@ let
     '';
   };
 
-  # The same wrapper for foot, and inert for the same reason: foot uses the
-  # Tamzen bitmap too. Kept so a switch back to a scalable CFF font, such as
-  # JetBrains Mono's OTF build, renders with stem darkening again.
+  # The same wrapper for foot, where it is no longer inert: the font line in
+  # programs.foot below pins JetBrains Mono's OTF build, and CFF outlines are
+  # the only kind FreeType darkens. foot's own manual names this very env var
+  # as the way to get it, having no option of its own.
+  #
+  # The value is character for character ghosttyWrapped's below, curve
+  # included, so the two terminals put the same weight on the same face; that
+  # block is where the four pairs are explained and where they should be
+  # changed. A bare "cff:no-stem-darkening=0" here, which is what this wrapper
+  # carried while it was inert, would leave foot a touch lighter than ghostty
+  # at this size -- FreeType's default curve tops out at 400 for thin stems
+  # rather than the 500 ghostty asks for.
   footWrapped = pkgs.symlinkJoin {
     name = "foot-${pkgs.foot.version}";
     paths = [ pkgs.foot ];
     nativeBuildInputs = [ pkgs.makeWrapper ];
     postBuild = ''
       wrapProgram $out/bin/foot \
-        --set FREETYPE_PROPERTIES "cff:no-stem-darkening=0"
+        --set FREETYPE_PROPERTIES \
+          "cff:no-stem-darkening=0 cff:darkening-parameters=500,500,1000,400,1667,300,2333,0"
     '';
   };
 
@@ -51,12 +61,14 @@ let
   # that aside to .ghostty-wrapped_, the suffix makeWrapper picks when the
   # obvious name is taken, so the two wrappers nest rather than collide.
   #
-  # darkening-parameters goes further than the bare no-stem-darkening=0 foot
-  # gets, because FreeType's default curve is deliberately conservative and
-  # macOS pushes harder. The four pairs are (stem width, darkening amount),
-  # both in 1/1000 em, interpolated between and tapering to nothing for wide
-  # stems; the default is 500,400,1000,275,1667,275,2333,0, and this lifts
-  # only the thin-stem end to 500, the ceiling.
+  # darkening-parameters goes further than a bare no-stem-darkening=0, because
+  # FreeType's default curve is deliberately conservative and macOS pushes
+  # harder. footWrapped above now sets the identical string, so everything
+  # below applies to both terminals. The four pairs are (stem width,
+  # darkening amount), both in 1/1000 em, interpolated between and tapering
+  # to nothing for wide stems; the default is
+  # 500,400,1000,275,1667,275,2333,0, and this lifts only the thin-stem end
+  # to 500, the ceiling.
   #
   # Two things measured rather than assumed, rendering the alphanumerics
   # through FreeType 2.14.3 and summing coverage:
@@ -279,8 +291,10 @@ in
   environment.etc."xdg/alacritty/alacritty.toml".source = ./alacritty.toml;
 
   # ------------------------------------------------------------------ foot
-  # A port of alacritty.toml to foot, font included, colours now included
-  # too: all three terminals are on Zed's "Ayu Classic OLED", and this block
+  # A port of alacritty.toml to foot -- except for the font, which now comes
+  # the other way, from ghostty.config, together with the FreeType settings
+  # that put it as close to macOS as FreeType gets. Colours are shared as
+  # well: all three terminals are on Zed's "Ayu Classic OLED", and this block
   # is the reference copy of it -- alacritty.toml's [colors] follows from
   # here, as does ghostty.config, the direction having reversed when the
   # palette changed. See colors-dark.
@@ -295,14 +309,48 @@ in
     package = footWrapped;
     settings = {
       main = {
-        # Tamzen's 8x15 strike, as in alacritty.toml (size = 11.25 there is the
-        # same 15 px). pixelsize rather than size: a bitmap is only sharp at
-        # the sizes it was drawn at, and pixelsize is not run through DPI
-        # scaling, so it names the strike exactly. Bold comes from Tamzen's
-        # own Bold strike; there is no italic, so italic text stays upright.
-        # A JetBrains Mono setup with macOS-like rendering (9 pt, CFF build,
-        # stem darkening, no gamma-correct blending) is in commit f781361.
-        font = "Tamzen:pixelsize=15";
+        # JetBrains Mono at 9 pt, ghostty's font and size: foot converts points
+        # at 96 DPI and multiplies by the output's scale factor of 1
+        # (dpi-aware = no, its default), so this is the same 12 px
+        # ghostty.config documents -- a cell of 7.2 x 15.8 px. The Tamzen 8x15
+        # bitmap this was on until now is still alacritty's and swayosd's font.
+        #
+        # Two fonts, in fallback order, the same pair and the same reasoning as
+        # ghostty.config's two font-family lines:
+        #   - the plain build for text, pinned to the OTF by fontformat=CFF
+        #     because stem darkening -- the macOS-like weight footWrapped turns
+        #     on -- applies to CFF outlines alone, and the TTF build is
+        #     installed alongside it.
+        #   - the Nerd Font's "Mono" cut for the icons, braille and heavy check
+        #     mark the plain build lacks, that being the cut whose icons fit one
+        #     cell. It ships TTF only, so those glyphs are not darkened; they
+        #     are icons rather than text, so the weight does not read.
+        # Naming the Nerd Font outright matters even though fontconfig would
+        # find it anyway: foot searches the configured fonts before the dynamic
+        # fontconfig list, and that list -- through the localConf rule below --
+        # offers the double-width "Nerd Font" cut first.
+        #
+        # The rendering options are ghostty's, spelled in fontconfig terms:
+        #   - hintstyle=hintnone, since macOS does not hint, matching
+        #     ghostty's freetype-load-flags = no-hinting. This was hintslight
+        #     when foot last used this font, on the belief that FreeType runs
+        #     stem darkening inside light hinting; measured through FreeType
+        #     2.14.3 that is not so -- the ink is identical either way -- and
+        #     the comment in ghostty.config has the numbers. Setting it here
+        #     as well as in localConf is deliberate: it keeps the terminal's
+        #     rendering readable in one place, and the two agree.
+        #   - antialias=true with rgba=none: greyscale antialiasing, no
+        #     subpixel colour fringes, which is both what ghostty does (it has
+        #     no subpixel mode) and what macOS has done since Mojave.
+        # Not set, being foot's defaults already: gamma-correct-blending = no,
+        # ghostty's alpha-blending = native, which keeps light-on-black text as
+        # full as macOS draws it; and box-drawings-uses-font-glyphs = no, foot
+        # drawing the box characters itself as ghostty does.
+        #
+        # Bold and italic come from the family's own Bold and Italic faces and
+        # inherit these options; unlike Tamzen, it has a real italic, so italic
+        # text now slants.
+        font = "JetBrains Mono:size=9:fontformat=CFF:antialias=true:rgba=none:hintstyle=hintnone, JetBrainsMono Nerd Font Mono:size=9:antialias=true:rgba=none:hintstyle=hintnone";
 
         # Alacritty's draw_bold_text_with_bright_colors: bold regular colours
         # switch to their bright palette entry. Under Noir Essence Dark that
@@ -524,7 +572,8 @@ in
   fonts.packages = with pkgs; [
     # Family names matter here, because alacritty.toml selects by family and
     # style, and one package can register several families.
-    tamzenFixed # "Tamzen", the font of Alacritty, foot and swayosd:
+    tamzenFixed # "Tamzen", the font of Alacritty and swayosd (and of foot
+    # until it followed ghostty onto JetBrains Mono):
     # bitmap, Regular and Bold at 9 and 12-16 and 20px, as both PCF
     # and OTB (the only bitmap format Pango, and so swayosd, still loads).
     # The OTB advances are corrected, see tamzenFixed above. Also registers
@@ -533,20 +582,21 @@ in
     # ("Medium") and 26px ("HiDpi") only, no bold. Not in use. The OTB
     # advances are corrected, as for Tamzen. Also registers the scalable
     # "CozetteVector", which is a different family and is not in use.
-    jetbrains-mono # "JetBrains Mono", the font of ghostty, waybar, mako,
-    # swaylock and fuzzel -- everything in the session that is not a
-    # bitmap -- and a previous Alacritty and foot one. Ships OTF (CFF) and TTF
-    # builds; fontconfig prefers the OTF one. Has box drawing and the classic
-    # powerline arrows, but no Nerd Font icons, braille or heavy check mark,
-    # so those fall back.
+    jetbrains-mono # "JetBrains Mono", the font of foot, ghostty, waybar,
+    # mako, swaylock and fuzzel -- everything in the session that is not a
+    # bitmap -- and a previous Alacritty one. Ships OTF (CFF) and TTF
+    # builds; fontconfig prefers the OTF one, and foot pins it outright with
+    # fontformat=CFF. Has box drawing and the classic powerline arrows, but
+    # no Nerd Font icons, braille or heavy check mark, so those fall back.
     nerd-fonts.jetbrains-mono # The same font patched with the Nerd Font
     # icons, registered as three separate families: "JetBrainsMono Nerd
     # Font", "... Nerd Font Mono" (icons forced to one cell) and "... Nerd
     # Font Propo" (proportional). Reached two ways: ghostty.config names the
     # Mono family outright as its second font-family, ghostty doing its own
-    # fallback rather than fontconfig's, and the rule below puts it right
-    # behind JetBrains Mono for everything that does go through fontconfig,
-    # mako included. It ships TTF only, which is why the primary font stays
+    # fallback rather than fontconfig's, foot's font line does the same with
+    # its second entry, and the rule below puts it right behind JetBrains Mono
+    # for everything that does go through fontconfig, mako included. It ships
+    # TTF only, which is why the primary font stays
     # the plain OTF build -- FreeType's stem darkening, the macOS-like
     # weight, applies to CFF outlines only.
     terminus_font_ttf # "Terminus (TTF)", the Alacritty font before that
@@ -586,7 +636,10 @@ in
   '';
 
   # The two hintstyle rules above are what put mako and swaylock on ghostty's
-  # unhinted rendering, the last thing that still differed. Neither links GTK
+  # unhinted rendering, the last thing that still differed. foot is on it too,
+  # but does not depend on them: its font line spells hintstyle=hintnone
+  # itself, and a target="font" rule like these would win over the pattern in
+  # any case -- the two simply agree. Neither of those two links GTK
   # -- both are cairo and FreeType straight onto a layer surface -- so they
   # take hinting from fontconfig, where fonts.fontconfig.hinting.style leaves
   # it at "slight" for everything. The rules are scoped to this one family
@@ -603,7 +656,8 @@ in
   # waybar reads the same fontconfig, so it follows along; being GTK its own
   # settings could in principle override, which would only put it back where
   # it already was. ghostty is unaffected either way -- it sets FreeType's
-  # load flags itself, in ghostty.config.
+  # load flags itself, in ghostty.config -- and foot, which takes them from
+  # fontconfig, asks for the same thing on its own font line.
 
   # ---------------------------------------------------------------- packages
   environment.systemPackages = with pkgs; [
