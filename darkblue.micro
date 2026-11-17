@@ -1,8 +1,10 @@
 # Tomorrow Night's group choices, drawn in whatever palette the terminal is
-# on -- "Ayu Classic OLED" today. Colours are ANSI names, so micro draws the
+# on -- "Noir Essence Dark" today. Colours are ANSI names, so micro draws the
 # terminal's own hex values: no MICRO_TRUECOLOR needed, and it keeps working
-# inside tmux. Bold only on bright* colours: both terminals brighten bold text
-# through the palette and would lift a normal colour twice.
+# inside tmux. Bold is kept on bright* colours alone, from when the palette
+# had two distinct halves and bold on a regular colour would have been lifted
+# twice; this theme gives both halves the same values except black, so under
+# it bold* reads as weight alone.
 # 241/246 are xterm-256 greys standing in for the comment and line-number
 # greys, which are not in the 16-colour palette. 235, the line highlight and
 # the inactive statusline, is one foot redefines (terminal.nix) to the

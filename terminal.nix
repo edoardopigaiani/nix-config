@@ -1,4 +1,5 @@
-# Port of the Fedora configuration for tmux, fish and alacritty.
+# Port of the Fedora configuration for tmux, fish and the terminal, which
+# was Alacritty there and is foot here.
 # Import it from configuration.nix:
 #   imports = [ ./hardware-configuration.nix ./terminal.nix ];
 #
@@ -9,66 +10,24 @@
 { config, pkgs, ... }:
 
 let
-  # FreeType leaves stem darkening off for CFF fonts; turning it on thickens
-  # strokes the way macOS does. It is set on the terminals alone so the rest of
-  # GNOME keeps its rendering. symlinkJoin wraps the cached binary instead of
-  # rebuilding it, and the desktop entries' Exec=alacritty / Exec=foot resolve
-  # to the wrappers through PATH.
+  # Stem darkening for foot, which is the macOS-like weight: FreeType leaves it
+  # off for CFF fonts, and turning it on thickens strokes the way macOS does.
+  # The font line in programs.foot below pins JetBrains Mono's OTF build, and
+  # CFF outlines are the only kind FreeType darkens. foot's own manual names
+  # this env var as the way to get it, having no option of its own. symlinkJoin
+  # wraps the cached binary instead of rebuilding it, and the desktop entry's
+  # Exec=foot resolves to the wrapper through PATH. It is set on the terminal
+  # and the session chrome alone, so GTK applications keep their rendering.
   #
-  # Note this is currently inert: alacritty.toml selects the Tamzen bitmap, for
-  # which FreeType reports render_mode "Mono" and antialiases nothing, so there
-  # are no greyscale edges to darken. It is kept for the scalable fonts -- the
-  # font.size/font.normal comments there spell out how narrow the bitmap's
-  # usable sizes are, and switching back makes this matter again.
-  alacrittyWrapped = pkgs.symlinkJoin {
-    name = "alacritty-${pkgs.alacritty.version}";
-    paths = [ pkgs.alacritty ];
-    nativeBuildInputs = [ pkgs.makeWrapper ];
-    postBuild = ''
-      wrapProgram $out/bin/alacritty \
-        --set FREETYPE_PROPERTIES "cff:no-stem-darkening=0"
-    '';
-  };
-
-  # The same wrapper for foot, where it is no longer inert: the font line in
-  # programs.foot below pins JetBrains Mono's OTF build, and CFF outlines are
-  # the only kind FreeType darkens. foot's own manual names this very env var
-  # as the way to get it, having no option of its own.
-  #
-  # The value is character for character ghosttyWrapped's below, curve
-  # included, so the two terminals put the same weight on the same face; that
-  # block is where the four pairs are explained and where they should be
-  # changed. A bare "cff:no-stem-darkening=0" here, which is what this wrapper
-  # carried while it was inert, would leave foot a touch lighter than ghostty
-  # at this size -- FreeType's default curve tops out at 400 for thin stems
-  # rather than the 500 ghostty asks for.
-  footWrapped = pkgs.symlinkJoin {
-    name = "foot-${pkgs.foot.version}";
-    paths = [ pkgs.foot ];
-    nativeBuildInputs = [ pkgs.makeWrapper ];
-    postBuild = ''
-      wrapProgram $out/bin/foot \
-        --set FREETYPE_PROPERTIES \
-          "cff:no-stem-darkening=0 cff:darkening-parameters=500,500,1000,400,1667,300,2333,0"
-    '';
-  };
-
-  # The same wrapper for ghostty, where it is not inert: ghostty.config puts
-  # JetBrains Mono's OTF build first, and CFF outlines are the only kind
-  # FreeType darkens. Ghostty has a font-thicken option of its own, but it is
-  # macOS-only (CoreText), so on Linux this env var is the whole mechanism.
-  # The upstream package already binary-wraps bin/ghostty; wrapProgram moves
-  # that aside to .ghostty-wrapped_, the suffix makeWrapper picks when the
-  # obvious name is taken, so the two wrappers nest rather than collide.
-  #
-  # darkening-parameters goes further than a bare no-stem-darkening=0, because
-  # FreeType's default curve is deliberately conservative and macOS pushes
-  # harder. footWrapped above now sets the identical string, so everything
-  # below applies to both terminals. The four pairs are (stem width,
-  # darkening amount), both in 1/1000 em, interpolated between and tapering
-  # to nothing for wide stems; the default is
-  # 500,400,1000,275,1667,275,2333,0, and this lifts only the thin-stem end
-  # to 500, the ceiling.
+  # This block is the reference copy of the curve: waybar, mako and swaylock
+  # set the identical string in desktop.nix, and the four have to agree or the
+  # bar and the notifications come out at a different weight from the terminal
+  # under them. darkening-parameters goes further than a bare
+  # no-stem-darkening=0, because FreeType's default curve is deliberately
+  # conservative and macOS pushes harder. The four pairs are (stem width,
+  # darkening amount), both in 1/1000 em, interpolated between and tapering to
+  # nothing for wide stems; the default is 500,400,1000,275,1667,275,2333,0,
+  # and this lifts only the thin-stem end to 500, the ceiling.
   #
   # Two things measured rather than assumed, rendering the alphanumerics
   # through FreeType 2.14.3 and summing coverage:
@@ -81,37 +40,17 @@ let
   #     comes out at 1216551 against the default's 1216493: unchanged where
   #     it should be, +8% at the size actually in use.
   # Dropping the thin-stem 500 back to 400 restores stock FreeType weight.
-  ghosttyWrapped = pkgs.symlinkJoin {
-    name = "ghostty-${pkgs.ghostty.version}";
-    paths = [ pkgs.ghostty ];
+  footWrapped = pkgs.symlinkJoin {
+    name = "foot-${pkgs.foot.version}";
+    paths = [ pkgs.foot ];
     nativeBuildInputs = [ pkgs.makeWrapper ];
     postBuild = ''
-      wrapProgram $out/bin/ghostty \
+      wrapProgram $out/bin/foot \
         --set FREETYPE_PROPERTIES \
           "cff:no-stem-darkening=0 cff:darkening-parameters=500,500,1000,400,1667,300,2333,0"
     '';
   };
 
-  # Bitmap fonts with exact advance widths in their OTB files, which Pango
-  # (swayosd, the last Pango consumer left on a bitmap now that waybar, mako,
-  # swaylock and fuzzel are all on JetBrains Mono) spaces too wide otherwise:
-  # Tamzen by 1 px per glyph,
-  # Cozette by half a pixel, rounded unevenly. bitmap-otb-advance.py has the
-  # why; it reads each glyph's width from its own bitmap. postFixup rather
-  # than postInstall: Tamzen's own installPhase does not run the install
-  # hooks. Only the OTBs change; the PCF, BDF and vector files are untouched.
-  fixOtbAdvances =
-    pkg:
-    pkg.overrideAttrs (old: {
-      nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [
-        (pkgs.python3.withPackages (ps: [ ps.fonttools ]))
-      ];
-      postFixup = (old.postFixup or "") + ''
-        python3 ${./bitmap-otb-advance.py} "$out"/share/fonts/misc/*.otb
-      '';
-    });
-  tamzenFixed = fixOtbAdvances pkgs.tamzen;
-  cozetteFixed = fixOtbAdvances pkgs.cozette;
 in
 {
   # ---------------------------------------------------------------- fish
@@ -132,45 +71,49 @@ in
       # Color theme. Ported from conf.d/fish_frozen_theme.fish, whose hex
       # values (990000 comments, ff0000 errors, 00a6b2 escapes, B3A06D pager
       # descriptions) belonged to no palette; the roles the theme named are
-      # kept, the colours are "Ayu Classic OLED" like everything else.
+      # kept, the colours are "Noir Essence Dark", and foot's colors-dark
+      # below is the reference copy.
       # Applied after fish picks its default theme, so these win.
       #
       # ANSI names are left wherever the slot itself is the right answer:
       # fish then draws whatever palette the terminal is on, which keeps the
-      # prompt correct in the TTY as well, where truecolour is ignored. Hex is
-      # used only where the theme has a value that is not an ANSI slot -- the
-      # greys, the amber and the syntax hues -- and each one is followed by a
-      # named fallback, fish's second-argument form, for the 16-colour case.
-      set --global fish_color_autosuggestion 626a73 brblack # the UI grey
+      # prompt correct in the TTY as well, where truecolour is ignored. This
+      # palette answers more of these roles with a plain slot than the ones
+      # before it did -- its operators, escapes and redirections are all the
+      # ansi blue -- so hex is left only where the theme names a colour that
+      # is not an ANSI one: the two greys, the comment grey and the string
+      # green it uses instead of the ansi green. Each is followed by a named
+      # fallback, fish's second-argument form, for the 16-colour case.
+      set --global fish_color_autosuggestion 51504d brblack # the comment grey
       set --global fish_color_cancel -r
       set --global fish_color_command green
-      set --global fish_color_comment 626a73 brblack # syntax.comment
+      set --global fish_color_comment 51504d brblack # the theme's comment grey, italic there
       set --global fish_color_cwd brblack
       set --global fish_color_cwd_root red
       set --global fish_color_end green
-      set --global fish_color_error d95757 red # the theme's `error`
-      set --global fish_color_escape 95e6cb brcyan # syntax.string.escape
+      set --global fish_color_error red # the ansi red, which is the theme's error
+      set --global fish_color_escape blue # constant.character.escape is the ansi blue
       set --global fish_color_history_current --bold
       set --global fish_color_host normal
       set --global fish_color_host_remote yellow
-      set --global fish_color_operator d9a97a yellow # syntax.operator
+      set --global fish_color_operator blue # keyword.operator, the ansi blue again
       set --global fish_color_normal normal
       set --global fish_color_param green
-      set --global fish_color_quote aad94c green # syntax.string
-      set --global fish_color_redirection 59c2ff blue # the bright blue
-      # Black on the amber, as in foot's search box, fuzzel's matches and the
-      # theme's own active match; the selection grey is foot's selection.
-      set --global fish_color_search_match black --background=e6b450
-      set --global fish_color_selection d9d7d0 --bold --background=152e3d
+      set --global fish_color_quote 98c379 green # the theme's string green, not its ansi one
+      set --global fish_color_redirection blue
+      # Black on the orange, as in foot's search box, fuzzel's matches and the
+      # theme's own search highlight; the selection grey is foot's selection.
+      set --global fish_color_search_match black --background=e78a4e
+      set --global fish_color_selection f7f3ea --bold --background=2b2d2d
       set --global fish_color_status red
       set --global fish_color_user blue
       set --global fish_color_valid_path --underline
       set --global fish_pager_color_completion
-      set --global fish_pager_color_description 707a8c brblack # text.muted
+      set --global fish_pager_color_description 908e89 brblack # statusBar.foreground, flattened
       set --global fish_pager_color_prefix normal --bold --underline
       # The strip grey, so the pager's progress line reads like every other
       # bar in the session.
-      set --global fish_pager_color_progress d9d7d0 --background=1b1f29
+      set --global fish_pager_color_progress f7f3ea --background=161819
       set --global fish_pager_color_selected_background -r
     '';
   };
@@ -190,12 +133,10 @@ in
     # store anyway): the battery indicator, the one plugin this used, is
     # waybar's job now.
     extraConfig = ''
-      set -as terminal-features ",alacritty*:RGB"
+      # Without this the bar's hex colours below are quantised to the
+      # 256-colour cube: tmux's own terminal is xterm-256color, which it does
+      # not credit with RGB on its own.
       set -as terminal-features ",foot*:RGB"
-      # Ghostty's TERM is xterm-ghostty, so the xterm* entry tmux already
-      # knows does not cover it; without this the bar's hex colours below are
-      # quantised to the 256-colour cube.
-      set -as terminal-features ",xterm-ghostty:RGB"
 
       # remap prefix from 'C-b' to 'C-a'
       unbind C-b
@@ -235,25 +176,29 @@ in
       set -g pane-active-border-style 'bg=colour0 fg=colour8'
 
       # bar
-      # The bar grey is #1b1f29, the palette's strip grey, shared with
-      # weechat's title and status bars and with Neovim's statusline.
+      # The bar grey is #161819, the palette's strip grey
+      # (editorWidget.background, what the theme draws its panels on), shared
+      # with weechat's title and status bars, Neovim's statusline, micro's
+      # inactive one and -- outside the terminal -- waybar, mako and
+      # swaylock. Every strip in the session is on it.
       # It is written as a hex here rather than as colour235: tmux takes
       # 24-bit values (RGB is on for foot in terminal-features above), so the
       # bar does not depend on what palette entry 235 happens to hold. weechat
       # cannot do that -- weechat.conf only takes palette indices -- which is
-      # why colors-dark below redefines 235 to the same value. The foreground
-      # colours are ANSI slots and follow foot's palette on their own.
+      # why colors-dark below redefines 235, to this same value. The
+      # foreground colours are ANSI slots and follow foot's palette on their
+      # own.
       set -g status-position bottom
       set -g status-justify centre
-      set -g status-style 'bg=#282726 fg=colour7'
+      set -g status-style 'bg=#161819 fg=colour7'
       # Only the window list: the time is in waybar, the date in its tooltip.
       set -g status-left ""
       set -g status-right ""
 
-      setw -g window-status-current-style 'fg=colour7 bg=#282726'
+      setw -g window-status-current-style 'fg=colour7 bg=#161819'
       setw -g window-status-current-format '#[fg=colour4]> #[fg=colour7]#W#[fg=colour7]'
 
-      setw -g window-status-style 'fg=colour7 bg=#282726'
+      setw -g window-status-style 'fg=colour7 bg=#161819'
       setw -g window-status-format '#[fg=colour8]> #[fg=colour7]#W#[fg=colour7]'
 
       setw -g window-status-bell-style 'fg=colour255 bg=colour4 bold'
@@ -278,74 +223,69 @@ in
     '';
   };
 
-  # ------------------------------------------------------------- alacritty
-  # NixOS has no programs.alacritty module, so the config is installed by hand.
-  #
-  # It stays a real TOML file instead of a Nix string: the URL hint regex
-  # contains \u escapes, a form Nix strings do not support and would corrupt.
-  #
-  # /etc/xdg is on XDG_CONFIG_DIRS, which Alacritty 0.17 searches right after
-  # the user config (verified with strace; the /etc/alacritty path named in
-  # alacritty(5) is only the last fallback). A user file at
-  # ~/.config/alacritty/alacritty.toml therefore still takes precedence.
-  environment.etc."xdg/alacritty/alacritty.toml".source = ./alacritty.toml;
-
   # ------------------------------------------------------------------ foot
-  # A port of alacritty.toml to foot -- except for the font, which now comes
-  # the other way, from ghostty.config, together with the FreeType settings
-  # that put it as close to macOS as FreeType gets. Colours are shared as
-  # well: all three terminals are on Zed's "Ayu Classic OLED", and this block
-  # is the reference copy of it -- alacritty.toml's [colors] follows from
-  # here, as does ghostty.config, the direction having reversed when the
-  # palette changed. See colors-dark.
+  # The terminal, and the reference copy of the whole look: the font and the
+  # FreeType settings that put it as close to macOS as FreeType gets, and the
+  # palette, which is "Noir Essence Dark" on a pure black background (see
+  # colors-dark). The session chrome, Neovim, weechat and micro all follow
+  # this block, and every one of them is on that palette now. It started as a
+  # port of the Alacritty config this file carried before it -- Alacritty and
+  # ghostty were both kept alongside for a while and are gone now -- which is
+  # why the settings below still name the Alacritty keys they came from.
   # The module writes /etc/xdg/foot/foot.ini, which ~/.config/foot/foot.ini
   # overrides. Settings equal to foot's defaults are left out: Ctrl+Shift+C/V,
   # Shift+Insert, Ctrl+0/+/-, Ctrl+Shift+N, Shift+PageUp/Down, middle-click
   # paste, the hollow unfocused cursor and Alacritty's semantic_escape_chars
-  # (foot's word-delimiters) all already match. foot has no live reload; new
+  # (foot's word-delimiters) all already matched. foot has no live reload; new
   # windows read the file.
   programs.foot = {
     enable = true;
     package = footWrapped;
     settings = {
       main = {
-        # JetBrains Mono at 9 pt, ghostty's font and size: foot converts points
-        # at 96 DPI and multiplies by the output's scale factor of 1
-        # (dpi-aware = no, its default), so this is the same 12 px
-        # ghostty.config documents -- a cell of 7.2 x 15.8 px. The Tamzen 8x15
-        # bitmap this was on until now is still alacritty's and swayosd's font.
+        # JetBrains Mono at 9 pt: foot converts points at 96 DPI and
+        # multiplies by the output's scale factor of 1 (dpi-aware = no, its
+        # default), so the face is rasterised at 12 px. The cell is 7x16 px,
+        # fcft ceiling FreeType's rounded metrics off a 0.6000 em advance and
+        # a 1.3200 em hhea line. The Tamzen 8x15 bitmap this config used to be
+        # on is gone, along with the other faces tried before it.
         #
-        # Two fonts, in fallback order, the same pair and the same reasoning as
-        # ghostty.config's two font-family lines:
+        # Two fonts, in fallback order:
         #   - the plain build for text, pinned to the OTF by fontformat=CFF
         #     because stem darkening -- the macOS-like weight footWrapped turns
         #     on -- applies to CFF outlines alone, and the TTF build is
         #     installed alongside it.
-        #   - the Nerd Font's "Mono" cut for the icons, braille and heavy check
-        #     mark the plain build lacks, that being the cut whose icons fit one
-        #     cell. It ships TTF only, so those glyphs are not darkened; they
-        #     are icons rather than text, so the weight does not read.
+        #   - the Nerd Font's "Mono" cut for the icons the plain build lacks,
+        #     that being the cut whose icons fit one cell. It ships TTF only,
+        #     so those glyphs are not darkened; they are icons rather than
+        #     text, so the weight does not read.
         # Naming the Nerd Font outright matters even though fontconfig would
         # find it anyway: foot searches the configured fonts before the dynamic
         # fontconfig list, and that list -- through the localConf rule below --
-        # offers the double-width "Nerd Font" cut first.
+        # offers the double-width "Nerd Font" cut first. Glyphs neither build
+        # has, braille and the heavy check mark among them, come from DejaVu
+        # Sans at the end of that list.
         #
-        # The rendering options are ghostty's, spelled in fontconfig terms:
-        #   - hintstyle=hintnone, since macOS does not hint, matching
-        #     ghostty's freetype-load-flags = no-hinting. This was hintslight
-        #     when foot last used this font, on the belief that FreeType runs
-        #     stem darkening inside light hinting; measured through FreeType
-        #     2.14.3 that is not so -- the ink is identical either way -- and
-        #     the comment in ghostty.config has the numbers. Setting it here
-        #     as well as in localConf is deliberate: it keeps the terminal's
-        #     rendering readable in one place, and the two agree.
+        # The rendering options, spelled in fontconfig terms:
+        #   - hintstyle=hintnone, since macOS does not hint. This was
+        #     hintslight on the belief that FreeType runs stem darkening inside
+        #     light hinting and that hintnone would drop the darkening with it.
+        #     Measured through FreeType 2.14.3 that does not hold: rasterising
+        #     the alphanumerics at this 12 px through the Adobe CFF engine
+        #     gives 410576 units of ink unhinted against 409069 under light
+        #     hinting -- the darkening intact either way, the two within 0.4%
+        #     -- so the hinting buys no weight and can go, and glyphs keep the
+        #     shapes they were drawn with rather than having their baselines
+        #     and x-heights snapped to the pixel grid. Setting it here as well
+        #     as in localConf is deliberate: it keeps the terminal's rendering
+        #     readable in one place, and the two agree.
         #   - antialias=true with rgba=none: greyscale antialiasing, no
-        #     subpixel colour fringes, which is both what ghostty does (it has
-        #     no subpixel mode) and what macOS has done since Mojave.
+        #     subpixel colour fringes, which is what macOS has done since
+        #     Mojave.
         # Not set, being foot's defaults already: gamma-correct-blending = no,
-        # ghostty's alpha-blending = native, which keeps light-on-black text as
-        # full as macOS draws it; and box-drawings-uses-font-glyphs = no, foot
-        # drawing the box characters itself as ghostty does.
+        # which keeps light-on-black text as full as macOS draws it, and
+        # box-drawings-uses-font-glyphs = no, foot drawing the box characters
+        # itself.
         #
         # Bold and italic come from the family's own Bold and Italic faces and
         # inherit these options; unlike Tamzen, it has a real italic, so italic
@@ -353,10 +293,15 @@ in
         font = "JetBrains Mono:size=9:fontformat=CFF:antialias=true:rgba=none:hintstyle=hintnone, JetBrainsMono Nerd Font Mono:size=9:antialias=true:rgba=none:hintstyle=hintnone";
 
         # Alacritty's draw_bold_text_with_bright_colors: bold regular colours
-        # switch to their bright palette entry. Under Noir Essence Dark that
-        # only ever changed black; the Ayu Classic values below, like the
-        # Flexoki steps before them, are measurably lighter in bright than in
-        # regular in all eight slots, so bold shifts colour throughout.
+        # switch to their bright palette entry. Under this palette that only
+        # ever changes black -- the theme gives its bright slots the same
+        # values as its regular ones, so there is no second, lighter half to
+        # shift into, unlike the gruvbox, Ayu Classic and Flexoki steps
+        # before it. Nothing is lost by that: those ports leaned on bold to
+        # lift a 3.84:1 red to 6.10:1, while here the darkest colour in the
+        # palette already measures 6.70:1 (see colors-dark). It stays on so
+        # that bold black still lands on a visible grey rather than on the
+        # background.
         bold-text-in-bright = "palette-based";
 
         # Alacritty sets TERM=xterm-256color; foot's own entry is more
@@ -368,7 +313,7 @@ in
         initial-window-mode = "maximized";
       };
 
-      # Alacritty's bell is silent (duration = 0, and it has no audible bell).
+      # Alacritty's bell was silent (duration = 0, and it had no audible bell).
       bell.system = "no";
 
       scrollback = {
@@ -391,51 +336,59 @@ in
         show-urls-launch = "Control+Shift+o Control+Shift+h";
       };
 
-      # Zed's "Ayu Classic OLED" (zed-extensions/ayu, themes/ayu.json), the
-      # theme the editor is set to, ported slot for slot from the theme's own
-      # terminal.ansi.* keys.
+      # "Noir Essence Dark" (u1145h.u1145h-heme-ark, themes/noir_essence_dark.json
+      # in the extension), the VS Code theme this machine is set to, ported
+      # slot for slot from the theme's own terminal.ansi* keys, with one
+      # departure that was asked for: the background and ansi black are pure
+      # #000000 rather than the theme's own #111314. Everything that is not a
+      # background is the theme's value unchanged.
       #
-      # Note this is not ayu-vim's original dark, which this config was on
-      # until the move (red #ff3333, green #b8cc52): the Zed theme follows the
-      # newer ayu-colors (red #ea6c73, green #91b362) -- softer, and uniformly
-      # higher contrast on black, nothing in the regular half falling below
-      # 6.89:1 against the 4.85:1 floor of the Flexoki port in between.
-      # Everything else has since followed this block, so it is the one place
-      # the palette is defined.
+      # This block is the reference copy of the palette again, and for the
+      # first time in three themes the whole session agrees with it:
+      # waybar.css, mako.conf, swayosd.css, fuzzel.ini, niri.kdl, swaylock's
+      # flags and console.colors in desktop.nix, Neovim's noir_essence.lua,
+      # darkblue.micro, the fish hexes above and tmux's bar below are all on
+      # these values.
       #
-      # The OLED variant specifies pure black for the background, so the
-      # override every theme before it needed here is gone. regular0 still
-      # follows the background instead of taking the theme's own ansi black
-      # (#01060e, a 1.03:1 glow), so a black cell cannot be told from an empty
-      # one.
+      # Measured on black, which matters because the theme was drawn against
+      # its own #111314 and is being used a step darker here:
+      #   - nothing in the palette is marginal: 6.70:1 at the floor (red) up
+      #     to 18.96:1 (the foreground), with lime 9.57, green 8.91, blue
+      #     8.46, orange 8.14 and magenta 7.65. The gruvbox port this
+      #     replaces bottomed out at 3.84:1 and needed bold to clear it.
+      #   - the two halves are the same colours, the theme naming no separate
+      #     bright set, so bold only moves black (see bold-text-in-bright).
+      #   - bright black, 2.18:1, is the one value that is not meant as text:
+      #     it is the hairline and dimmed-text grey the whole session borders
+      #     with.
       #
-      # Roles foot has and a Zed theme does not are derived from the nearest
-      # key it does define, named per line below. ayu's amber accent (#e6b450,
-      # the theme's focus rings and active search match) does the work the
-      # Flexoki port had to spend yellow-400 on, Flexoki declaring no single
-      # accent.
+      # Roles foot has that the theme does not name as a terminal colour are
+      # taken from its UI keys, named per line.
       colors-dark = {
-        background = "000000"; # the theme's own value, this being the OLED cut
-        foreground = "d9d7d0";
-        # Black on the accent, as the pre-Flexoki ayu config had it: it keeps
-        # the character under the block readable, which cursor == foreground
-        # would not.
-        cursor = "000000 e6b450"; # text, then cursor
+        background = "000000"; # asked for; the theme's own bg is 111314
+        foreground = "f7f3ea"; # editor.foreground
+        # The theme names both halves of the cursor: the lime block is
+        # terminalCursor.foreground and the dark teal under it is
+        # terminalCursor.background, which holds the character at 4.51:1
+        # where cursor == foreground would have hidden it.
+        cursor = "334743 a9b665"; # text, then cursor
         # foot has no CellForeground; the default foreground is what nearly
         # every selected cell would show anyway.
-        selection-foreground = "d9d7d0";
-        # Zed states the selection as players[0].selection, #59c2ff at 24%
-        # alpha; foot wants an opaque colour, so this is that blend on black.
-        selection-background = "152e3d";
-        jump-labels = "000000 e6b450";
-        search-box-match = "000000 e6b450"; # search.active_match_background
-        search-box-no-match = "000000 d95757"; # the theme's `error`
-        # A strip grey one step off black, shared with the weechat bars below:
-        # the theme's own surfaces (#050608) sit too close to the background
-        # to read as a panel at all. #1b1f29 is its hidden/ignored border,
-        # the darkest tone it draws that is still visible on black.
-        scrollback-indicator = "d9d7d0 1b1f29";
-        urls = "59c2ff"; # link_text.hover
+        selection-foreground = "f7f3ea";
+        selection-background = "2b2d2d"; # editor.selectionBackground; fg on it is 12.51:1
+        # Black on the orange, which is the accent the theme highlights
+        # matches with (editor.findMatchHighlightBackground is that colour at
+        # 0x55): 8.14:1 under the label.
+        jump-labels = "000000 e78a4e";
+        search-box-match = "000000 e78a4e";
+        search-box-no-match = "000000 ea6962"; # the ansi red, the theme's error
+        # The strip grey, one step off black: editorWidget.background, what
+        # the theme draws its panels and popups on. The theme's own
+        # background (#111314) sits at 1.13:1 and barely reads as a panel
+        # against black; this one is 1.18:1 and is the value every bar in the
+        # session uses.
+        scrollback-indicator = "f7f3ea 161819";
+        urls = "7daea3"; # the ansi blue, textLink.foreground
 
         # weechat draws its title and status bars on palette entry 235
         # (weechat.conf's status.color_bg and title.color_bg), and weechat
@@ -443,78 +396,55 @@ in
         # the xterm default of #262626 is to redefine the entry here.
         # darkblue.micro reads the same entry, for micro's cursor-line,
         # color-column and inactive statusline, so both move together. The
-        # strip grey above replaces it, slightly darker and ayu-tinted. 235
-        # sits in the 232..255 greyscale ramp; any program walking that ramp
-        # sees this one step shifted. waybar and mako still draw their own
-        # bars on Flexoki's base-900 (#282726, desktop.nix), so the greys no
-        # longer agree to the byte; both are near-neutral at that lightness,
-        # and setting this back to 282726 makes them identical again.
-        "235" = "1b1f29";
+        # strip grey above replaces it, and waybar, mako, swaylock, Neovim
+        # and tmux's bar are all on that same value, so every strip in the
+        # session matches. 235 sits in the 232..255 greyscale ramp; any
+        # program walking that ramp sees this one step shifted.
+        "235" = "161819";
 
-        regular0 = "000000"; # the background; the theme's ansi black is 01060e
-        regular1 = "ea6c73";
-        regular2 = "91b362";
-        regular3 = "f9af4f"; # ayu's yellow is an orange
-        regular4 = "53bdfa";
-        regular5 = "d2a6ff"; # and its magenta a violet
-        regular6 = "90e1c6";
-        regular7 = "c7c7c7";
-        bright0 = "686868"; # 3.77:1, so bold black is visible at all
-        bright1 = "f07178";
-        bright2 = "c2d94c";
-        bright3 = "e8c783";
-        bright4 = "59c2ff";
-        bright5 = "ddbcff";
-        bright6 = "95e6cb";
-        bright7 = "ffffff";
+        regular0 = "000000"; # the background, as asked; the theme's ansi black is 2b2d2d
+        regular1 = "ea6962";
+        regular2 = "89b482";
+        regular3 = "e78a4e"; # an orange in this palette, not a yellow
+        regular4 = "7daea3";
+        regular5 = "d3869b";
+        regular6 = "a9b665"; # the lime, which is also the cursor and the accent
+        regular7 = "f7f3ea";
+        # The only slot the theme really brightens, terminal.ansiBrightBlack,
+        # so bold black is visible at all.
+        bright0 = "434545";
+        bright1 = "ea6962";
+        bright2 = "89b482";
+        bright3 = "e78a4e";
+        bright4 = "7daea3";
+        bright5 = "d3869b";
+        bright6 = "a9b665";
+        bright7 = "f7f3ea";
 
-        # SGR 2 (faint). Unset, foot blends the current colour towards black
-        # by dim-amount; the theme declares a terminal.ansi.dim_* set of its
-        # own, so the faint half comes from the palette instead. These only
-        # apply to text already on a regularN colour, which is where dim text
-        # lands in practice. dim0 is lighter than regular0 rather than darker,
-        # black having nothing left to dim towards.
-        dim0 = "30343d";
-        dim1 = "ad5c62";
-        dim2 = "6e9430";
-        dim3 = "b38133";
-        dim4 = "3f8ac6";
-        dim5 = "926cb8";
-        dim6 = "6ea897";
-        dim7 = "8f908b";
+        # No dim* block, as in the gruvbox port before this: the theme names
+        # no faint half either, so SGR 2 is left to foot, which blends the
+        # current colour towards the background by dim-amount. Writing one
+        # out would mean inventing colours the theme does not have.
       };
     };
   };
 
-  # ------------------------------------------------- micro & ghostty files
-  # Two programs whose config neither /etc nor a command-line flag can reach,
-  # so the files are linked into ~/.config -- the mechanism desktop.nix uses
-  # for mako, rather than the /etc/xdg one foot and alacritty get.
-  #
-  # micro only reads user colorschemes from ~/.config/micro/colorschemes, so
-  # the Alacritty-matching scheme is linked there. Selecting it is left to
-  # micro (`set colorscheme darkblue`), which keeps the choice in its own
-  # mutable settings.json.
-  #
-  # ghostty has no system-wide path at all: it reads only
-  # $XDG_CONFIG_HOME/ghostty/config.ghostty and ignores XDG_CONFIG_DIRS, so
-  # /etc/xdg would be dead. ghostty.config holds the port itself, setting by
-  # setting against the programs.foot block above; its last line pulls in an
-  # optional ~/.config/ghostty/user.ghostty, which gives back the
-  # hand-editable override that linking over the real config path would
-  # otherwise cost. Ghostty reloads it on Ctrl+Shift+comma. The package is
-  # ghosttyWrapped from the let block, installed in systemPackages below.
+  # ------------------------------------------------------- micro's theme
+  # micro only reads user colorschemes from ~/.config/micro/colorschemes, a
+  # path neither /etc nor a command-line flag can reach, so the file is linked
+  # there -- the mechanism desktop.nix uses for mako, rather than the /etc/xdg
+  # one foot gets. Selecting it is left to micro (`set colorscheme darkblue`),
+  # which keeps the choice in its own mutable settings.json. The scheme
+  # itself needs no porting: it is written entirely in ANSI names, so micro
+  # draws whatever colors-dark above holds, and its bars follow along by
+  # reading palette entry 235 like weechat.
   systemd.tmpfiles.rules =
     let
-      home = config.users.users.edo.home;
-      microDir = "${home}/.config/micro/colorschemes";
-      ghosttyDir = "${home}/.config/ghostty";
+      microDir = "${config.users.users.edo.home}/.config/micro/colorschemes";
     in
     [
       "d ${microDir} 0755 edo users -"
       "L+ ${microDir}/darkblue.micro - - - - ${./darkblue.micro}"
-      "d ${ghosttyDir} 0755 edo users -"
-      "L+ ${ghosttyDir}/config.ghostty - - - - ${./ghostty.config}"
     ];
 
   # -------------------------------------------------------------- neovim
@@ -532,17 +462,19 @@ in
         gitsigns-nvim
         which-key-nvim
         nvim-lspconfig # server definitions for vim.lsp.enable
-        # The Ayu Classic port, as a one-file plugin providing
-        # :colorscheme ayu_classic. nvim.lua selects it; it is the palette
-        # both terminals, Zed and the session chrome are on, so Neovim matches
-        # whatever it is running inside. The only colorscheme installed: the
-        # ports of the themes before it (flexoki, ayu_dark, noir_essence) were
-        # kept for comparison until the whole config was on one palette, and
-        # were deleted once it was. They are in the history of this file.
-        (pkgs.linkFarm "ayu-classic-nvim" [
+        # The Noir Essence Dark port, as a one-file plugin providing
+        # :colorscheme noir_essence. nvim.lua selects it; it is the palette
+        # colors-dark above and the whole session chrome are on, so Neovim
+        # matches the terminal it is running inside. The only colorscheme
+        # installed: the ports of the themes before it (flexoki, ayu_dark,
+        # ayu_classic) were kept for comparison until the whole config was on
+        # one palette, and were deleted once it was. They are in the history
+        # of this file -- this very port among them, from the first time the
+        # session was on this theme.
+        (pkgs.linkFarm "noir-essence-nvim" [
           {
-            name = "colors/ayu_classic.lua";
-            path = ./ayu_classic.lua;
+            name = "colors/noir_essence.lua";
+            path = ./noir_essence.lua;
           }
         ])
         # Neovim already bundles c, lua, markdown, query, vim and vimdoc.
@@ -569,46 +501,36 @@ in
   # fonts.packages is the option that registers a font with fontconfig, while
   # systemPackages only happened to work because NixOS also scans the system
   # profile.
+  # One family, because everything in the session is on it: foot's font line,
+  # swayosd.css, waybar.css, mako.conf, fuzzel.ini and swaylock's flags in
+  # desktop.nix all name it, and family names are how they select it. The
+  # bitmaps tried before it -- Tamzen, Cozette, Terminus -- are gone, with
+  # the OTB advance fixup they needed; they are in the history of this file.
   fonts.packages = with pkgs; [
-    # Family names matter here, because alacritty.toml selects by family and
-    # style, and one package can register several families.
-    tamzenFixed # "Tamzen", the font of Alacritty and swayosd (and of foot
-    # until it followed ghostty onto JetBrains Mono):
-    # bitmap, Regular and Bold at 9 and 12-16 and 20px, as both PCF
-    # and OTB (the only bitmap format Pango, and so swayosd, still loads).
-    # The OTB advances are corrected, see tamzenFixed above. Also registers
-    # "TamzenForPowerline", not in use.
-    cozetteFixed # "Cozette", the Alacritty font before that: bitmap, 13px
-    # ("Medium") and 26px ("HiDpi") only, no bold. Not in use. The OTB
-    # advances are corrected, as for Tamzen. Also registers the scalable
-    # "CozetteVector", which is a different family and is not in use.
-    jetbrains-mono # "JetBrains Mono", the font of foot, ghostty, waybar,
-    # mako, swaylock and fuzzel -- everything in the session that is not a
-    # bitmap -- and a previous Alacritty one. Ships OTF (CFF) and TTF
-    # builds; fontconfig prefers the OTF one, and foot pins it outright with
-    # fontformat=CFF. Has box drawing and the classic powerline arrows, but
-    # no Nerd Font icons, braille or heavy check mark, so those fall back.
+    jetbrains-mono # "JetBrains Mono", the font of foot, waybar, mako,
+    # swaylock, fuzzel and swayosd -- the whole session. Ships OTF (CFF) and
+    # TTF builds; fontconfig prefers the OTF one, and foot pins it outright
+    # with fontformat=CFF, stem darkening applying to CFF alone. Has box
+    # drawing and the classic powerline arrows, but no Nerd Font icons,
+    # braille or heavy check mark, so those fall back.
     nerd-fonts.jetbrains-mono # The same font patched with the Nerd Font
     # icons, registered as three separate families: "JetBrainsMono Nerd
     # Font", "... Nerd Font Mono" (icons forced to one cell) and "... Nerd
-    # Font Propo" (proportional). Reached two ways: ghostty.config names the
-    # Mono family outright as its second font-family, ghostty doing its own
-    # fallback rather than fontconfig's, foot's font line does the same with
-    # its second entry, and the rule below puts it right behind JetBrains Mono
-    # for everything that does go through fontconfig, mako included. It ships
-    # TTF only, which is why the primary font stays
-    # the plain OTF build -- FreeType's stem darkening, the macOS-like
-    # weight, applies to CFF outlines only.
-    terminus_font_ttf # "Terminus (TTF)", the Alacritty font before that
-    terminus_font # Terminus bitmap (PCF/OTB) variants, 12px to 32px
+    # Font Propo" (proportional). Reached two ways: foot's font line names the
+    # Mono family outright as its second font, foot searching its configured
+    # fonts before fontconfig's list, and the rule below puts it right behind
+    # JetBrains Mono for everything that does go through fontconfig, mako
+    # included. It ships TTF only, which is why the primary font stays the
+    # plain OTF build -- FreeType's stem darkening, the macOS-like weight,
+    # applies to CFF outlines only.
   ];
 
   # Icon fallback for JetBrains Mono. Without this rule fontconfig falls back
   # through its generic sans-serif list, none of which has the icons, and
   # then takes whichever installed font happens to rank best: tested against
   # this config, that was the Nerd Font's NL variant for most icons but
-  # Adwaita Mono for the rounded powerline caps -- and CozetteVector, a
-  # pixel-style face that has the icons too, is one ranking away. Appending
+  # Adwaita Mono for the rounded powerline caps, and the ranking moves on its
+  # own whenever the installed set changes. Appending
   # the Nerd Font right after "JetBrains Mono" in every pattern that asks for
   # it makes it the first font tried for any glyph JetBrains Mono lacks, in
   # mako and anywhere else it is used. "binding=strong" ranks it like the
@@ -635,17 +557,17 @@ in
     </fontconfig>
   '';
 
-  # The two hintstyle rules above are what put mako and swaylock on ghostty's
-  # unhinted rendering, the last thing that still differed. foot is on it too,
-  # but does not depend on them: its font line spells hintstyle=hintnone
-  # itself, and a target="font" rule like these would win over the pattern in
-  # any case -- the two simply agree. Neither of those two links GTK
-  # -- both are cairo and FreeType straight onto a layer surface -- so they
-  # take hinting from fontconfig, where fonts.fontconfig.hinting.style leaves
-  # it at "slight" for everything. The rules are scoped to this one family
-  # rather than set globally, which is why they are here and not a change to
-  # that option: Tamzen is a bitmap and has no hinting to speak of, and the
-  # Adwaita faces the GTK apps use are meant to stay as GNOME renders them.
+  # The two hintstyle rules above are what put mako and swaylock on the
+  # terminal's unhinted rendering, the last thing that still differed. foot
+  # does not depend on them: its font line spells hintstyle=hintnone itself,
+  # and a target="font" rule like these would win over the pattern in any
+  # case -- the two simply agree. Neither of those two links GTK -- both are
+  # cairo and FreeType straight onto a layer surface -- so they take hinting
+  # from fontconfig, where fonts.fontconfig.hinting.style leaves it at
+  # "slight" for everything. The rules are scoped to this one family rather
+  # than set globally, which is why they are here and not a change to that
+  # option: the Adwaita faces the GTK applications use are meant to stay as
+  # GNOME renders them.
   #
   # target="font" and not "pattern", because hintstyle is a property of the
   # face that came back from matching rather than of the request. Both
@@ -653,16 +575,13 @@ in
   # fallback for this text: without the second rule an icon inside a
   # notification would come out hinted while the words around it did not.
   #
-  # waybar reads the same fontconfig, so it follows along; being GTK its own
-  # settings could in principle override, which would only put it back where
-  # it already was. ghostty is unaffected either way -- it sets FreeType's
-  # load flags itself, in ghostty.config -- and foot, which takes them from
-  # fontconfig, asks for the same thing on its own font line.
+  # waybar and swayosd read the same fontconfig, so they follow along; being
+  # GTK their own settings could in principle override, which would only put
+  # them back where they already were. foot takes its load flags from
+  # fontconfig too, and asks for the same thing on its own font line.
 
   # ---------------------------------------------------------------- packages
   environment.systemPackages = with pkgs; [
-    alacrittyWrapped
-    ghosttyWrapped # also what puts xterm-ghostty on TERMINFO_DIRS
     micro
     wget
     git

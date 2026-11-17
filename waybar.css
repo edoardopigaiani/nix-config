@@ -9,51 +9,52 @@
  * only the subset of selectors GTK implements. @define-color is the GTK way
  * of naming a colour once.
  *
- * Palette: "Ayu Classic OLED", the theme Zed is set to, by way of foot's
+ * Palette: "Noir Essence Dark", the theme VS Code is set to, by way of foot's
  * colors-dark block in terminal.nix -- the reference copy every file in the
- * session now follows. The bar was the last thing split across two palettes
- * and is no longer: @foreground is the terminal's foreground, the greys are
- * the theme's own, and the eight hues are its ANSI slots.
+ * session follows. @foreground is the terminal's foreground, the greys are
+ * the theme's own panel and selection values, and the hues are its ANSI
+ * slots.
  *
  * @foreground is the only colour on the bar most of the time: every module
  * inherits it and nothing else is drawn unless a state fires. The greys, the
- * amber and the red show in the tray menu, the tooltips, the hover fill and
+ * orange and the red show in the tray menu, the tooltips, the hover fill and
  * the two battery warnings. The whole palette is kept, not only the slots in
- * use: @green, @yellow, @magenta, @blue and @cyan currently have no rule of
- * their own. Note @yellow and @orange are both ambers in this palette, closer
- * to each other than ayu-vim's #e7c547 and #f29718 were -- it costs nothing
- * while @yellow is unused, but pick @orange, the accent, for anything new. */
+ * use: @green, @magenta, @blue and @lime currently have no rule of their own.
+ * This theme has no yellow -- its ANSI yellow slot is the orange below, which
+ * is also what it highlights search matches with, so @orange is the accent to
+ * pick for anything new. @lime is the other candidate, the colour of the
+ * terminal cursor. */
 
-@define-color background  #000000;  /* the theme's own, this being the OLED cut */
-@define-color surface     #1b1f29;  /* the strip grey, foot's palette entry 235 */
-@define-color overlay     #152e3d;  /* the theme's selection, as in both terminals */
-@define-color muted       #626a73;  /* the theme's UI grey: comments, line numbers */
-@define-color foreground  #d9d7d0;  /* terminal.foreground, the white of the bar */
-@define-color red         #ea6c73;
-@define-color green       #91b362;
-@define-color yellow      #f9af4f;  /* the ANSI slot, an orange here */
-@define-color orange      #e6b450;  /* ayu's amber accent: the terminal cursor */
-@define-color blue        #53bdfa;
-@define-color magenta     #d2a6ff;
-@define-color cyan        #90e1c6;
+@define-color background  #000000;  /* as the terminal; the theme's own is #111314 */
+@define-color surface     #161819;  /* the strip grey, foot's palette entry 235 */
+@define-color overlay     #2b2d2d;  /* the theme's selection, as in the terminal */
+@define-color muted       #434545;  /* the ansi bright black: borders, hairlines */
+@define-color foreground  #f7f3ea;  /* terminal.foreground, the white of the bar */
+@define-color red         #ea6962;
+@define-color green       #89b482;
+@define-color orange      #e78a4e;  /* the ANSI yellow slot, an orange here */
+@define-color blue        #7daea3;
+@define-color magenta     #d3869b;
+@define-color lime        #a9b665;  /* the ANSI cyan slot: the terminal cursor */
 
 * {
-  /* JetBrains Mono at 12px, the same face and size as ghostty (9 pt there,
+  /* JetBrains Mono at 12px, the same face and size as foot (9 pt there,
    * which it turns into 12 px at this display's scale), so the bar and the
-   * terminal below it read as one surface. Alacritty and foot are still on
-   * Tamzen's 8x15 strike, so the bar no longer matches those two.
+   * terminal below it read as one surface. swayosd.css is on the same pair.
    *
    * CSS cannot pick a font format, but fontconfig already prefers the OTF
    * (CFF) build, and CFF is what the stem darkening set on the waybar unit in
    * desktop.nix needs -- that env var is what keeps the weight here equal to
-   * ghostty's.
+   * the terminal's.
    *
    * Antialiasing and hinting are not ours to set from CSS: Pango takes them
-   * from the GTK gsettings, which desktop.nix leaves at the schema defaults
-   * of greyscale and slight. Greyscale matches ghostty; slight hinting does
-   * not, ghostty now loading glyphs unhinted the way macOS does. Closing
-   * that last gap would mean font-hinting = "none" in the dconf block, which
-   * is global to every GTK app, so it is deliberately not done here.
+   * from fontconfig and the GTK gsettings, which desktop.nix leaves at the
+   * schema defaults of greyscale and slight. Greyscale is what foot does too;
+   * the hinting is settled in terminal.nix instead, whose localConf assigns
+   * hintstyle=hintnone to this family for everything that asks for it, the
+   * bar included, so the bar is unhinted the way the terminal is. Doing it
+   * through font-hinting = "none" in the dconf block would have been global
+   * to every GTK app, which is why it is not done there.
    *
    * The modules stay plain-text labels (B:, V:, L:, N:, Idle). Note that is
    * now a choice rather than a limit: Tamzen covered only ASCII, but the

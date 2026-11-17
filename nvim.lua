@@ -7,13 +7,13 @@
 vim.g.mapleader = " "
 vim.g.maplocalleader = " "
 
--- foot and Alacritty are both truecolour, and tmux passes RGB through for them
--- (terminal-features in terminal.nix), so the colorscheme's hex values arrive
--- as they are. ayu_classic is Zed's "Ayu Classic OLED", the palette both
--- terminals are on, so the editor and its terminal match. It is the only
--- colorscheme installed (terminal.nix).
+-- foot is truecolour, and tmux passes RGB through for it (terminal-features
+-- in terminal.nix), so the colorscheme's hex values arrive as they are.
+-- noir_essence is "Noir Essence Dark", the VS Code theme the whole session is
+-- on, so the editor and its terminal match. It is the only colorscheme
+-- installed (terminal.nix).
 vim.o.termguicolors = true
-vim.cmd.colorscheme("ayu_classic")
+vim.cmd.colorscheme("noir_essence")
 
 -- ---------------------------------------------------------------- options
 vim.o.number = true -- the current line's number...
@@ -38,7 +38,8 @@ vim.o.expandtab = true
 vim.o.shiftwidth = 2
 vim.o.softtabstop = 2
 
--- Only characters Tamzen has, so none of them falls back to another font.
+-- Characters the terminal font has itself (checked against JetBrains Mono),
+-- so none of them falls back to another face mid-line.
 vim.o.list = true
 vim.opt.listchars = { tab = "» ", trail = "·", nbsp = "+" }
 
@@ -83,10 +84,12 @@ map("t", "<M-l>", [[<C-\><C-n><C-w>l]], { desc = "Window right" })
 -- ------------------------------------------------------------------ snacks
 -- snacks.nvim is already here as claudecode.nvim's terminal; its picker also
 -- takes over vim.ui.select. File icons are off: there is no icon plugin, and
--- the Nerd Font glyphs would have to fall back from Tamzen to Cozette. The
--- diagnostic and git markers are plain letters for the same reason: the
--- diagnostics match Neovim's own sign column (E/W/I/H), the git ones follow
--- `git status --short`.
+-- plain text is the style of the tmux line and the bar. It is a choice now
+-- rather than the limit it was under the bitmap -- the fontconfig rule in
+-- terminal.nix puts JetBrainsMono Nerd Font behind the terminal's family, so
+-- the glyphs would resolve. The diagnostic and git markers are plain letters
+-- to match: the diagnostics follow Neovim's own sign column (E/W/I/H), the
+-- git ones `git status --short`.
 require("snacks").setup({
   picker = {
     enabled = true,

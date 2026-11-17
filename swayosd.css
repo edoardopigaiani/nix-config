@@ -2,15 +2,17 @@
  *
  * Passed to swayosd-server by its unit in desktop.nix. This is GTK4 CSS and
  * replaces swayosd's own stylesheet entirely, so every rule it needs is here.
- * The look is unchanged -- square corners, a hairline border in the muted
- * grey, Tamzen at its 8x15 strike for the percentage -- and the palette is
- * "Ayu Classic OLED", the one every other file is on; foot's colors-dark in
+ * The look is square corners, a hairline border in the muted grey and the
+ * percentage in JetBrains Mono at the bar's size -- it was Tamzen's 8x15
+ * bitmap until the bitmaps were dropped from fonts.packages, which is why
+ * the size below is 12px rather than that strike -- and the palette is
+ * "Noir Essence Dark", the one every other file is on; foot's colors-dark in
  * terminal.nix is the reference copy. GTK4's CSS has no @define-color scoping
  * worth using here, so the colours are written out. */
 
 window#osd {
   background: #000000;              /* background */
-  border: 1px solid #626a73;        /* the theme's UI grey, the hairline */
+  border: 1px solid #434545;        /* the ansi bright black, the hairline */
   border-radius: 0;
 }
 
@@ -21,12 +23,14 @@ window#osd #container {
 /* The icon (from the Adwaita icon theme) and the percentage. */
 window#osd image,
 window#osd label {
-  color: #d9d7d0;                   /* terminal.foreground, as in the bar */
+  color: #f7f3ea;                   /* terminal.foreground, as in the bar */
 }
 
 window#osd label {
-  font-family: "Tamzen", monospace;
-  font-size: 15px;
+  /* As waybar.css: 12px is the 9 pt foot draws at this scale, and the stem
+   * darkening on the unit in desktop.nix matches the weight. */
+  font-family: "JetBrains Mono", monospace;
+  font-size: 12px;
 }
 
 /* Muted output or microphone: the bar and icon dim instead of disappearing. */
@@ -48,7 +52,7 @@ window#osd segment {
   min-height: inherit;
   border-radius: 0;
   border: none;
-  background: #152e3d;              /* the theme's selection, the trough */
+  background: #2b2d2d;              /* the theme's selection, the trough */
 }
 
 window#osd progress,
@@ -56,7 +60,7 @@ window#osd segment.active {
   min-height: inherit;
   border-radius: 0;
   border: none;
-  background: #d9d7d0;              /* like the label */
+  background: #f7f3ea;              /* like the label */
 }
 
 window#osd segment {

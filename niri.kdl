@@ -11,10 +11,10 @@
 // desktop.nix runs exactly that at build time, so a syntax error fails the
 // rebuild instead of dropping you into a black screen.
 //
-// Colours are "Ayu Classic OLED", the palette the whole session is on; the
+// Colours are "Noir Essence Dark", the palette the whole session is on; the
 // reference copy is the foot block in terminal.nix. They are written out
 // rather than shared because this is a real KDL file, the same trade-off
-// alacritty.toml already makes.
+// waybar.css and the other chrome files make.
 
 // -------------------------------------------------------------------- input
 input {
@@ -57,8 +57,8 @@ output "eDP-1" {
     // Pinned to 1 on purpose. The panel is 1920x1080 on 13.3" (~166 DPI), and
     // niri picks a fractional scale from the EDID when left alone, which would
     // suddenly make everything bigger than it is under GNOME today. Change
-    // this to 1.25 or 1.5 if you want larger UI; terminal font sizes are set
-    // separately in alacritty.toml / terminal.nix.
+    // this to 1.25 or 1.5 if you want larger UI; the terminal font size is
+    // set separately, in terminal.nix.
     scale 1
     // niri picks the highest refresh rate it can by itself; `mode` is left
     // unset so an external panel swap cannot make the session fail to start.
@@ -91,27 +91,29 @@ layout {
     // or a border (inside it); using only the ring keeps windows at the size
     // they asked for.
     //
-    // Active is #30343d, the theme's ansi dim black (foot's dim0) -- the ring
-    // is as quiet as a ring can be, at 1.68:1 against the black background.
-    // It replaces ayu-vim's #323232 at 1.64:1, so the ring is unchanged in
-    // practice; the role-faithful port would have been the new ansi bright
-    // black, #686868, and at 3.77:1 that is a different, much louder ring.
+    // Active is #2b2d2d, the theme's editor.selectionBackground and its ansi
+    // black -- the ring is as quiet as a ring can be, at 1.52:1 against the
+    // black background. It replaces the #30343d of the ayu port at 1.68:1,
+    // so the ring is unchanged in practice; the role-faithful port would
+    // have been the ansi bright black, #434545, and at 2.18:1 that is a
+    // louder ring -- it is the grey the rest of the session borders in, and
+    // the rest of the session is not sitting on top of window content.
     //
     // Inactive is fully transparent rather than a darker grey. There is
-    // nothing below #30343d in the palette that stays visible: the next
-    // candidates, #1b1f29 and #0a0e14, sit at 1.27:1 and 1.09:1, so the first
-    // is near-indistinguishable from the active ring and the second from the
-    // background. With no second grey that works, the ring marks focus by
-    // being there at all -- the same move waybar.css makes with the workspace
-    // underline. Unfocused windows simply have no outline.
+    // nothing below #2b2d2d in the palette that stays visible: the next
+    // candidates, #161819 and #111314, sit at 1.18:1 and 1.13:1, so the
+    // first is near-indistinguishable from the active ring and the second
+    // from the background. With no second grey that works, the ring marks
+    // focus by being there at all -- the same move waybar.css makes with the
+    // workspace underline. Unfocused windows simply have no outline.
     //
     // If you want every window outlined again, give inactive-color a visible
-    // grey (#1b1f29, the strip grey) and lift active-color above it --
-    // #626a73, the theme's UI grey, is the one the rest of the session draws
-    // borders in, and #686868 above is louder still.
+    // grey (#161819, the strip grey) and lift active-color above it --
+    // #434545, the ansi bright black, is the one the rest of the session
+    // draws borders in.
     focus-ring {
         width 2
-        active-color "#30343d"
+        active-color "#2b2d2d"
         inactive-color "#00000000"
     }
 
@@ -161,12 +163,12 @@ cursor {
 
 // ------------------------------------------------------------------ overview
 overview {
-    // #0a0e14 is the theme's editor.active_line, the value it uses for the
-    // one surface that sits just off its background -- which under the OLED
-    // variant is pure black, so there is no darker panel to borrow. The only
-    // surface in the session that wants to be barely off black gets the
-    // palette's own answer to exactly that.
-    backdrop-color "#0a0e14"
+    // #111314 is the theme's own editor.background, which this config
+    // overrides with pure black everywhere else (terminal.nix, colors-dark).
+    // That makes it exactly the value wanted here: the one surface in the
+    // session that should read as barely off black, 1.13:1, below even the
+    // #161819 the strips are drawn on.
+    backdrop-color "#111314"
 }
 
 // --------------------------------------------------------------- animations
@@ -192,7 +194,7 @@ binds {
     // ---------------------------------------------------------- launching
     Mod+F1 { show-hotkey-overlay; }
 
-    Mod+Return hotkey-overlay-title="Terminal: ghostty" { spawn "ghostty"; }
+    Mod+Return hotkey-overlay-title="Terminal: foot" { spawn "foot"; }
     Mod+D hotkey-overlay-title="Launcher: fuzzel" { spawn "fuzzel"; }
     // Clipboard history (cliphist, a user service in desktop.nix): pick an
     // entry in fuzzel and it becomes the clipboard again, ready for Ctrl+V.
@@ -200,29 +202,23 @@ binds {
     // line, which is what fuzzel prints back.
     Mod+V hotkey-overlay-title="Clipboard history" { spawn "sh" "-c" "cliphist list | fuzzel --dmenu --with-nth 2 --prompt 'clip> ' | cliphist decode | wl-copy"; }
     Mod+B hotkey-overlay-title="Browser: Firefox" { spawn "firefox"; }
-    // These two run in a terminal and get an app-id of their own, which is
-    // what foot's -a used to do here. The ghostty spellings differ twice
-    // over: --class replaces -a, and the command needs -e in front of it
-    // rather than being trailing arguments. -e goes last on purpose --
-    // ghostty treats everything after it as the command and stops reading
-    // flags.
+    // These two run in a terminal and get an app-id of their own, through
+    // foot's -a. The command is trailing arguments, with no flag in front of
+    // it; foot does accept -e, but only as an xterm compatibility no-op, and
+    // it is not needed here.
     //
-    // The app-id cannot be a bare word any more. ghostty's --class becomes a
-    // GTK application ID, which must satisfy g_application_id_is_valid:
-    // reverse-DNS, at least one dot. Checked, and "yazi" and "wiremix" both
-    // come back invalid, so they are namespaced under ghostty's own default
-    // class instead. Worth knowing that `ghostty +validate-config` does NOT
-    // catch a bad one -- it parses the value and leaves GTK to reject it at
-    // startup -- so a bare word here would have failed only at runtime.
+    // A bare word is a valid app-id for foot -- it goes straight to the
+    // Wayland surface, with none of the reverse-DNS validation a GTK
+    // application ID has to pass -- so these are the plain names.
     //
     // Nothing in this file matches on either id today: there are no
     // window-rule blocks at all. They are kept because that is what the -a
-    // flags meant, and so a rule can be written later.
+    // flags are for, and so a rule can be written later.
     //
     // yazi is the file manager that replaces Nautilus.
-    Mod+E hotkey-overlay-title="Files: yazi" { spawn "ghostty" "--class=com.mitchellh.ghostty.yazi" "-e" "yazi"; }
+    Mod+E hotkey-overlay-title="Files: yazi" { spawn "foot" "-a" "yazi" "yazi"; }
     // The audio mixer: outputs, inputs and per-app volume.
-    Mod+A hotkey-overlay-title="Audio mixer: wiremix" { spawn "ghostty" "--class=com.mitchellh.ghostty.wiremix" "-e" "wiremix"; }
+    Mod+A hotkey-overlay-title="Audio mixer: wiremix" { spawn "foot" "-a" "wiremix" "wiremix"; }
     // Not Mod+L: that is "focus the column to the right" below, and `niri
     // validate` rejects the duplicate.
     Mod+Shift+L hotkey-overlay-title="Lock the screen" { spawn "loginctl" "lock-session"; }

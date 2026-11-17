@@ -28,27 +28,29 @@
 #     gnome-shell. Binding to niri.service scopes them to niri; niri.service
 #     is `BindsTo=graphical-session.target`, so they still stop cleanly.
 #
-# Colours are one palette: "Ayu Classic OLED", the theme Zed is set to
-# (zed-extensions/ayu, themes/ayu.json). foot's colors-dark block in
-# terminal.nix is the reference copy -- it is ported straight from the theme's
-# own keys, and every other file follows it: alacritty.toml, niri.kdl,
-# waybar.css, mako.conf, swayosd.css, fuzzel.ini, swaylock below,
-# console.colors below and Neovim's ayu_classic.lua.
+# Colours are one palette: "Noir Essence Dark", the theme VS Code is set to
+# (marketplace u1145h.u1145h-heme-ark, themes/noir_essence_dark.json in the
+# extension). foot's colors-dark block in terminal.nix is the reference copy
+# -- it is ported straight from the theme's own terminal keys, and every
+# other file follows it: niri.kdl, waybar.css, mako.conf, swayosd.css,
+# fuzzel.ini, swaylock below, console.colors below and Neovim's
+# noir_essence.lua.
 #
-# Be careful with values carried over from before the move: this config was
-# on ayu-vim's original dark, the same hues at different values (red #ff3333
-# against #ea6c73), and on Flexoki in between. Both Neovim ports are gone and
-# nothing here is on either, so anything not matching the list above is stale.
+# Be careful with values carried over from before the move: this config has
+# been on ayu-vim's dark, on Flexoki, on Zed's "Ayu Classic OLED" and on
+# gruvbox, and Zed itself is on none of those now. Anything not matching the
+# list above is stale.
 #
 # The palette names three greys by role rather than by ANSI number, and those
-# do most of the work in the chrome. #1b1f29 is the strip grey, filling mako's
-# notification, swaylock's indicator and waybar's tooltips and tray menu; foot
-# also puts it on palette entry 235, which is how weechat's, tmux's, micro's
-# and Neovim's bars land on the same value. #152e3d is the theme's selection,
-# for fuzzel's selected row, swayosd's trough and waybar's hover fill -- the
-# value both terminals highlight with. #626a73 is the UI grey the session's
-# borders and hairlines are drawn in. The one exception is niri's focus ring,
-# deliberately quieter than any of the three; niri.kdl says why.
+# do most of the work in the chrome. #161819 is the strip grey
+# (editorWidget.background), filling mako's notification, swaylock's
+# indicator and waybar's tooltips and tray menu; foot also puts it on palette
+# entry 235, which is how weechat's, tmux's, micro's and Neovim's bars land
+# on the same value. #2b2d2d is the theme's selection, for fuzzel's selected
+# row, swayosd's trough and waybar's hover fill -- the value the terminal
+# highlights with. #434545 is the ansi bright black, the UI grey the
+# session's borders and hairlines are drawn in. The one exception is niri's
+# focus ring, deliberately quieter than any of the three; niri.kdl says why.
 
 { config, pkgs, ... }:
 
@@ -64,15 +66,14 @@ let
 
   # --------------------------------------------------------------- fuzzel
   # Wrapped for one variable: the stem darkening that puts its JetBrains Mono
-  # at the weight ghostty, waybar, mako and swaylock draw. fuzzel goes through
+  # at the weight foot, waybar, mako and swaylock draw. fuzzel goes through
   # fcft onto FreeType directly -- it links no GTK and runs under no systemd
   # unit -- so neither a gsettings key nor a drop-in can carry it, and a
   # wrapper is the only hook left. niri spawns the launcher as a bare
   # "fuzzel" off PATH (niri.kdl, Mod+D and the Mod+V clipboard pipe), which
-  # is what makes this wrapper the one that runs, the same way foot's and
-  # ghostty's resolve in terminal.nix. The value is copied from
-  # ghosttyWrapped there, where the curve is explained and where it should be
-  # changed.
+  # is what makes this wrapper the one that runs, the same way foot's resolves
+  # in terminal.nix. The value is copied from footWrapped there, where the
+  # curve is explained and where it should be changed.
   fuzzelWrapped = pkgs.symlinkJoin {
     name = "fuzzel-${pkgs.fuzzel.version}";
     paths = [ pkgs.fuzzel ];
@@ -89,7 +90,7 @@ let
   # read-only and not on any search path that matters, so the theme is passed
   # as flags instead. Colours are RRGGBB with no leading '#', which is
   # swaylock's format, and 00000000 is fully transparent. The font is
-  # JetBrains Mono at 12, matching ghostty, waybar and mako; without
+  # JetBrains Mono at 12, matching foot, waybar and mako; without
   # --font-size swaylock sizes the text from the indicator radius instead.
   #
   # That 12 is pixels, not points: swaylock hands the number to
@@ -97,27 +98,29 @@ let
   # unscaled here. It selects the face with cairo_select_font_face -- the toy
   # API, so --font takes a bare family name and not a Pango description, and
   # fontconfig resolves it to the OTF (CFF) build that the stem darkening
-  # exported below needs. The export is the same curve as ghostty's, and it
-  # has to be in this script rather than on a unit because swayidle execs
-  # this file; it was dropped when swaylock went back to Tamzen, a bitmap
+  # exported below needs. The export is the same curve as the terminal's, and
+  # it has to be in this script rather than on a unit because swayidle execs
+  # this file; it was dropped for a while, when swaylock was on a bitmap
   # FreeType antialiases nothing of, and is live again now.
   #
-  # Colours are "Ayu Classic OLED", as everywhere else; foot's colors-dark in
-  # terminal.nix is the reference copy. The idle ring is 626a73, the theme's
-  # UI grey, the same hairline fuzzel's border and swayosd's border use. That
-  # it stays findable is the point: it measures 3.83:1 on black, between ayu's
-  # old 5c6773 (3.64:1) and the base-600 this replaces (4.11:1), so the ring
-  # is as visible as it has been through both ports. Not 30343d, the step
-  # niri's focus ring takes: on a lock screen the ring is the only thing on a
-  # black field, where niri's sits against window content and is meant to stay
-  # out of the way. 1b1f29, filling the indicator, is the strip grey, the same
-  # value foot puts on palette entry 235.
+  # Colours are "Noir Essence Dark", as everywhere else; foot's colors-dark in
+  # terminal.nix is the reference copy. The idle ring is 434545, the ansi
+  # bright black, the same hairline fuzzel's border and swayosd's border use.
+  # That it stays findable is the point: it measures 2.18:1 on black, quieter
+  # than the 3.83:1 of the ayu grey it replaces but the only grey this theme
+  # offers above its panel values -- the next ones down, 2b2d2d and 161819,
+  # sit at 1.52:1 and 1.18:1 and would read as nothing on a black field. Not
+  # 2b2d2d, the step niri's focus ring takes: on a lock screen the ring is
+  # the only thing on screen, where niri's sits against window content and is
+  # meant to stay out of the way. 161819, filling the indicator, is the strip
+  # grey, the same value foot puts on palette entry 235.
   #
-  # The keystroke tick (--key-hl-color) is the ANSI green and not the amber,
-  # which here is spent on the verifying ring: at the same colour, a tick
-  # appearing while you type would look like the ring having already flipped
-  # to verifying. With ayu back the amber is the palette's own accent, so it
-  # takes the verifying role that Flexoki's yellow-400 stood in for.
+  # The keystroke tick (--key-hl-color) is the lime and not the orange, which
+  # here is spent on the verifying ring: at the same colour, a tick appearing
+  # while you type would look like the ring having already flipped to
+  # verifying. The lime is the theme's own accent -- its cursor colour -- and
+  # the orange is what it highlights matches with, which is the louder, more
+  # momentary of the two.
   #
   # Only swayidle invokes this: `loginctl lock-session` raises logind's Lock
   # signal, swayidle's `lock` event catches it, and Mod+Shift+L in niri.kdl
@@ -133,20 +136,20 @@ let
     export FREETYPE_PROPERTIES="cff:no-stem-darkening=0 cff:darkening-parameters=500,500,1000,400,1667,300,2333,0"
     exec ${pkgs.swaylock}/bin/swaylock -f \
       --color 000000 \
-      --inside-color 1b1f29 \
-      --inside-clear-color 1b1f29 \
-      --inside-ver-color 1b1f29 \
-      --inside-wrong-color 1b1f29 \
-      --ring-color 626a73 \
-      --ring-clear-color 53bdfa \
-      --ring-ver-color e6b450 \
-      --ring-wrong-color ea6c73 \
-      --key-hl-color 91b362 \
-      --bs-hl-color ea6c73 \
-      --text-color d9d7d0 \
-      --text-clear-color d9d7d0 \
-      --text-ver-color d9d7d0 \
-      --text-wrong-color d9d7d0 \
+      --inside-color 161819 \
+      --inside-clear-color 161819 \
+      --inside-ver-color 161819 \
+      --inside-wrong-color 161819 \
+      --ring-color 434545 \
+      --ring-clear-color 7daea3 \
+      --ring-ver-color e78a4e \
+      --ring-wrong-color ea6962 \
+      --key-hl-color a9b665 \
+      --bs-hl-color ea6962 \
+      --text-color f7f3ea \
+      --text-clear-color f7f3ea \
+      --text-ver-color f7f3ea \
+      --text-wrong-color f7f3ea \
       --line-color 00000000 \
       --separator-color 00000000 \
       --indicator-radius 90 \
@@ -158,7 +161,7 @@ let
   # --------------------------------------------------------- waybar config
   # Nix rather than a real file, because unlike waybar.css this has no syntax
   # Nix would corrupt -- the same split terminal.nix makes between the foot
-  # module and alacritty.toml.
+  # module and the files it links instead, nvim.lua and darkblue.micro.
   #
   # Note what is NOT here: glyph icons -- and that it is now a choice rather
   # than a limit. Tamzen covered only ASCII and part of Latin-1, so icon
@@ -322,35 +325,36 @@ in
       "--kb-power 12"
       # Named ANSI colours rather than hex: the Linux VT is a 16-colour
       # terminal and ignores truecolour escapes. console.colors below remaps
-      # those 16 slots to Ayu Classic, so "cyan" here really is #90e1c6.
+      # those 16 slots to Noir Essence Dark, so "cyan" here really is the
+      # theme's lime, #a9b665.
       "--theme 'container=black;border=lightblack;title=white;greet=white;time=cyan;prompt=green;input=white;action=blue;button=yellow'"
     ];
   };
 
-  # The kernel console palette, set to Ayu Classic so the greeter, the TTYs
-  # and the terminals inside the session all draw from one set of colours.
-  # Values are foot's regular0-7 and bright0-7 (terminal.nix), in the order
-  # the kernel expects and without the leading '#'. Slot 0 is black rather
-  # than the theme's #01060e, as in both terminals, and it is also the console
-  # background. Every bright slot has its own lighter value, so 9-15 do not
-  # repeat 1-7.
+  # The kernel console palette, set to Noir Essence Dark so the greeter, the
+  # TTYs and the terminals inside the session all draw from one set of
+  # colours. Values are foot's regular0-7 and bright0-7 (terminal.nix), in the
+  # order the kernel expects and without the leading '#'. Slot 0 is black
+  # rather than the theme's #111314, as in the terminal, and it is also the
+  # console background. Bright black is the only slot the theme brightens, so
+  # 9-15 repeat 1-7 here -- which is exactly what foot does above.
   console.colors = [
     "000000" # 0  black, and the console background
-    "ea6c73" # 1  red
-    "91b362" # 2  green
-    "f9af4f" # 3  yellow, an orange here
-    "53bdfa" # 4  blue
-    "d2a6ff" # 5  magenta, a violet
-    "90e1c6" # 6  cyan
-    "c7c7c7" # 7  white
-    "686868" # 8  bright black
-    "f07178" # 9  bright red
-    "c2d94c" # 10 bright green
-    "e8c783" # 11 bright yellow
-    "59c2ff" # 12 bright blue
-    "ddbcff" # 13 bright magenta
-    "95e6cb" # 14 bright cyan
-    "ffffff" # 15 bright white
+    "ea6962" # 1  red
+    "89b482" # 2  green
+    "e78a4e" # 3  yellow, an orange here
+    "7daea3" # 4  blue
+    "d3869b" # 5  magenta
+    "a9b665" # 6  cyan, the theme's lime and its accent
+    "f7f3ea" # 7  white
+    "434545" # 8  bright black -- the one slot that really differs
+    "ea6962" # 9  bright red
+    "89b482" # 10 bright green
+    "e78a4e" # 11 bright yellow
+    "7daea3" # 12 bright blue
+    "d3869b" # 13 bright magenta
+    "a9b665" # 14 bright cyan
+    "f7f3ea" # 15 bright white
   ];
 
   # ---------------------------------------------------------------- waybar
@@ -361,7 +365,7 @@ in
     systemd.target = "niri.service";
   };
   # Stem darkening for the bar's JetBrains Mono, the same macOS-like weight
-  # ghostty draws. The value is copied from ghosttyWrapped in terminal.nix,
+  # foot draws. The value is copied from footWrapped in terminal.nix,
   # which is where the curve is explained and where it should be changed; the
   # two have to agree or the bar and the terminal under it come out at
   # different weights. FreeType applies it to CFF outlines only, which is the
@@ -381,9 +385,9 @@ in
   # Its config cannot live in /etc, so it is linked into ~/.config -- which
   # also means mako finds it when D-Bus activates it rather than systemd.
   # FREETYPE_PROPERTIES: stem darkening for its JetBrains Mono, on the same
-  # curve ghostty and waybar draw. The value is copied from ghosttyWrapped in
+  # curve foot and waybar draw. The value is copied from footWrapped in
   # terminal.nix, which is where it is explained and where it should be
-  # changed; the three have to agree or notifications come out at a different
+  # changed; they have to agree or notifications come out at a different
   # weight from the bar and the terminal they sit over. mako links no GTK --
   # it is cairo and pango straight onto a layer surface -- so this is the
   # whole of what governs its weight.
@@ -482,8 +486,16 @@ in
   #     brightness module, so this is where the values are read.
   # The package's swayosd-libinput-backend (a root service that shows Caps
   # Lock and the like) is not enabled: nothing here needs it.
+  #
+  # FREETYPE_PROPERTIES: the percentage is JetBrains Mono now (swayosd.css),
+  # so it wants the same stem darkening as the bar and the notifications. The
+  # value is copied from footWrapped in terminal.nix, where the curve is
+  # explained. swayosd is GTK4, so its text goes through Pango onto FreeType
+  # and the variable reaches it; it was not here while the label was a bitmap,
+  # which FreeType antialiases nothing of and so cannot darken.
   systemd.user.services.swayosd = sessionService // {
     description = "On-screen display for volume and brightness";
+    environment.FREETYPE_PROPERTIES = "cff:no-stem-darkening=0 cff:darkening-parameters=500,500,1000,400,1667,300,2333,0";
     serviceConfig = {
       ExecStart =
         let
