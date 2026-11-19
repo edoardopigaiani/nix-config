@@ -132,6 +132,25 @@ layout {
     }
 }
 
+// ------------------------------------------------------------- window rules
+// A rule with no `match` applies to every window, which is how a global
+// setting is spelled here: niri has no corner radius in `layout`.
+//
+// geometry-corner-radius rounds the geometry niri itself draws, so the
+// focus-ring above follows the curve; it does nothing to the window's own
+// pixels. clip-to-geometry is what actually cuts the client's content to
+// that curve, and without it every window keeps square corners that poke
+// out past the ring. Both are needed, and prefer-no-csd below is why: it
+// asks GTK clients to drop their own rounded title bars, so the compositor
+// is the only thing left that can round anything.
+//
+// 8 px against the 2 px focus-ring and the gap `layout` sets. Going much
+// above ~12 starts to make a 2 px ring look thin where it bends.
+window-rule {
+    geometry-corner-radius 8
+    clip-to-geometry true
+}
+
 // ------------------------------------------------------------- misc session
 // Ask clients to let the compositor draw decorations. Most GTK apps honour it
 // and lose their rounded CSD title bars, which both saves vertical space and
