@@ -76,7 +76,7 @@
  * The hairline that used to sit at the bottom edge is gone with it: with no
  * bar surface to end, a grey line across the screen reads as a stray rule
  * rather than as the edge of anything. Nothing separates the modules from a
- * maximised window now except the 8px gap niri leaves above it. */
+ * maximised window now except the 10px gap niri leaves above it. */
 window#waybar {
   background-color: transparent;
   color: @foreground;

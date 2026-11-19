@@ -66,7 +66,11 @@ output "eDP-1" {
 
 // ------------------------------------------------------------------- layout
 layout {
-    gaps 8
+    // The gap around every window, and so also the strip of wallpaper under
+    // waybar: the bar reserves its own space and does not draw a surface, so
+    // this is what separates the modules from a maximised window.
+    // waybar.css names the number where it explains that edge.
+    gaps 10
 
     // Drawn under the wallpaper: swaybg (a user service in desktop.nix) covers
     // it, so this black only shows if the image is missing or before swaybg
