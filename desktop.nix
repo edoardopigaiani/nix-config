@@ -468,7 +468,7 @@ in
   systemd.user.services.swaybg = sessionService // {
     description = "Wallpaper";
     serviceConfig = {
-      ExecStart = "${pkgs.swaybg}/bin/swaybg -m fill -c '#000000' -i \"%h/Pictures/wallhaven-mlrd9m (Edited).jpg\"";
+      ExecStart = "${pkgs.swaybg}/bin/swaybg -m fill -c '#000000' -i \"%h/Pictures/hans-iEKg9h5_hd4-unsplash.jpg\"";
       Restart = "on-failure";
     };
   };
