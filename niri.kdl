@@ -156,6 +156,11 @@ layout {
 //
 // 8 px against the 2 px focus-ring and the gap `layout` sets. Going much
 // above ~12 starts to make a 2 px ring look thin where it bends.
+//
+// This number is the session's one radius: the chrome follows it, in
+// fuzzel.ini, mako.conf, swayosd.css and waybar.css (its tooltip and tray
+// menu). Change it here and change those four, or the popups stop matching
+// the windows they sit over.
 window-rule {
     geometry-corner-radius 8
     clip-to-geometry true

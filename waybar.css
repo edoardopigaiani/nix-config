@@ -69,7 +69,11 @@
    * format asked for them. */
   font-family: "JetBrains Mono", monospace;
   font-size: 12px;
-  /* GTK draws a rounded shadow on tooltips and menus otherwise. */
+  /* A reset, not the look: this zero keeps GTK from putting its own rounded
+   * shadow on every widget, and the two surfaces that should be rounded --
+   * the tooltip and the tray menu at the bottom of this file -- ask for it
+   * by name instead. The bar itself has no corners to round: it draws no
+   * surface at all (see window#waybar below). */
   border: none;
   border-radius: 0;
   min-height: 0;
@@ -88,17 +92,18 @@ window#waybar {
   color: @foreground;
 }
 
-/* Every module gets the same breathing room. The two paddings stack: this
- * 4px on the module group plus the 8px each module carries below puts the
- * first label 12px from the screen edge, where foot's own padding is 10.
- * Two pixels out, which is close enough that the bar and a maximised
- * terminal still read as one column of text; dropping this to 2px would
- * line them up exactly, at the cost of the groups sitting tighter
- * together. */
+/* The two paddings stack: this 2px on the module group plus the 8px each
+ * module carries below puts the first label 10px from the screen edge,
+ * which is exactly foot's own 10x10. The bar and a maximised terminal under
+ * it are one column of text, aligned to the pixel.
+ *
+ * So the 8px below is the module's breathing room and this 2px is only the
+ * remainder that makes the sum come out at foot's number -- change the one
+ * below and this has to be recomputed, not matched. */
 .modules-left,
 .modules-center,
 .modules-right {
-  padding: 0 4px;
+  padding: 0 2px;
 }
 
 #workspaces button,
@@ -182,6 +187,9 @@ window#waybar.empty #window {
   background-color: @surface;
   color: @foreground;
   border: 1px solid @muted;
+  /* 8px, the radius niri.kdl rounds windows to; fuzzel.ini says why the four
+   * chrome surfaces follow it. */
+  border-radius: 8px;
 }
 
 #tray > .passive {
@@ -196,6 +204,8 @@ window#waybar.empty #window {
 tooltip {
   background-color: @surface;
   border: 1px solid @muted;
+  /* As the tray menu above: the session's 8px. */
+  border-radius: 8px;
 }
 
 tooltip label {

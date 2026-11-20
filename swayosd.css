@@ -2,7 +2,8 @@
  *
  * Passed to swayosd-server by its unit in desktop.nix. This is GTK4 CSS and
  * replaces swayosd's own stylesheet entirely, so every rule it needs is here.
- * The look is square corners, a hairline border in the muted grey and the
+ * The look is an 8px radius matching niri's windows, a hairline border in
+ * the muted grey and the
  * percentage in JetBrains Mono at the bar's size -- it was Tamzen's 8x15
  * bitmap until the bitmaps were dropped from fonts.packages, which is why
  * the size below is 12px rather than that strike -- and the palette is
@@ -10,10 +11,14 @@
  * terminal.nix is the reference copy. GTK4's CSS has no @define-color scoping
  * worth using here, so the colours are written out. */
 
+/* 8px, the radius niri.kdl rounds windows to; fuzzel.ini says why the four
+ * chrome surfaces follow it. The progress bar below keeps its square ends:
+ * it is a meter inside this panel, not a panel of its own, and at 6px tall
+ * any radius worth seeing would swallow it. */
 window#osd {
   background: #000000;              /* background */
   border: 1px solid #434545;        /* the ansi bright black, the hairline */
-  border-radius: 0;
+  border-radius: 8px;
 }
 
 window#osd #container {

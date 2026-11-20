@@ -1,6 +1,17 @@
-# Edit this configuration file to define what should be installed on
-# your system. Help is available in the configuration.nix(5) man page, on
-# https://search.nixos.org/options and in the NixOS manual (`nixos-help`).
+# The root module: the machine itself, and whatever does not belong to one of
+# the four files it imports. Boot and disks, networking, locale, the user, and
+# the GUI applications that are installed but configured elsewhere or not at
+# all.
+#
+# What is deliberately NOT here:
+#   - terminal.nix   foot, fish, tmux, Neovim, micro and the terminal fonts
+#   - nix-builds.nix what a rebuild is allowed to do to a 4-thread laptop
+#   - desktop.nix    the niri session and everything that replaced GNOME
+#
+# The commented-out option stubs NixOS ships in this file are gone; the
+# options themselves are at https://search.nixos.org/options, which is a
+# better list than a stale copy of eight of them. configuration.nix(5) and
+# `nixos-help` are the other two references.
 
 { pkgs, ... }:
 
@@ -89,14 +100,7 @@
   # Use latest kernel.
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
-  networking.hostName = "x395"; # Define your hostname.
-  # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
-
-  # Configure network proxy if necessary
-  # networking.proxy.default = "http://user:password@proxy:port/";
-  # networking.proxy.noProxy = "127.0.0.1,localhost,internal.domain";
-
-  # Enable networking
+  networking.hostName = "x395";
   networking.networkmanager.enable = true;
 
   # Tailscale: the only way into the homelab from outside the house.
@@ -167,8 +171,6 @@
     alsa.enable = true;
     alsa.support32Bit = true;
     pulse.enable = true;
-    # If you want to use JACK applications, uncomment this
-    # jack.enable = true;
   };
 
   # Define a user account. Don't forget to set a password with ‘passwd’.
@@ -214,30 +216,6 @@
   # enables hardware.graphics.enable32Bit, without which the 32-bit client dies
   # at startup with "glXChooseVisual failed".
   programs.steam.enable = true;
-
-  # Some programs need SUID wrappers, can be configured further or are
-  # started in user sessions.
-  # programs.mtr.enable = true;
-  # programs.gnupg.agent = {
-  #   enable = true;
-  #   enableSSHSupport = true;
-  # };
-
-  # List services that you want to enable:
-
-  # Enable the OpenSSH daemon.
-  # services.openssh.enable = true;
-
-  # Open ports in the firewall.
-  # networking.firewall.allowedTCPPorts = [ ... ];
-  # networking.firewall.allowedUDPPorts = [ ... ];
-  # Or disable the firewall altogether.
-  # networking.firewall.enable = false;
-
-  # Copy the NixOS configuration file and link it from the resulting system
-  # (/run/current-system/configuration.nix). This is useful in case you
-  # accidentally delete configuration.nix.
-  # system.copySystemConfiguration = true;
 
   # This option defines the first version of NixOS you have installed on this particular machine,
   # and is used to maintain compatibility with application data (e.g. databases) created on older NixOS versions.
