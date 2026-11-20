@@ -8,8 +8,12 @@
 # power-profiles-daemon for tlp. What GNOME used to provide and the session
 # still needs is declared below, under "after GNOME".
 #
-# Each phase is its own commit. The boot menu still holds the generations
-# from before phase 3, which boot straight into a system with GNOME.
+# Each phase is its own commit. The boot menu no longer reaches back that
+# far: the last generation that still had gnome-shell was 83, the menu holds
+# the newest ten (configurationLimit in configuration.nix), and the count is
+# past 150 -- so rolling back to a GNOME session is no longer one reboot
+# away. The generations themselves are still on disk until nh clean takes
+# them; `ls /nix/var/nix/profiles/` is what remains of them.
 #
 # Design rules followed throughout, both inherited from terminal.nix:
 #
@@ -55,6 +59,21 @@
 { config, pkgs, ... }:
 
 let
+  # ------------------------------------------------------- stem darkening
+  # The macOS-like weight, set on everything in this file that draws
+  # JetBrains Mono through FreeType: the launcher's wrapper, the lock
+  # screen's script, and the waybar, mako and swayosd units. It was written
+  # out five times here before, with each copy's comment warning that they
+  # had to agree -- one binding is that warning made structural.
+  #
+  # terminal.nix's footWrapped is still the reference copy: that is where the
+  # curve is explained, where the two measurements behind it are recorded,
+  # and where it should be changed. This has to be changed with it, or the
+  # chrome comes out at a different weight from the terminal under it. The
+  # two cannot share a binding -- they are separate modules, with no `let` in
+  # common -- so the duplication that is left is the cross-file one.
+  freetypeProperties = "cff:no-stem-darkening=0 cff:darkening-parameters=500,500,1000,400,1667,300,2333,0";
+
   # ----------------------------------------------------------- niri config
   # The KDL is checked at build time, so a typo fails `nh os switch` with the
   # parse error instead of handing you a compositor that will not start. niri
@@ -72,16 +91,14 @@ let
   # wrapper is the only hook left. niri spawns the launcher as a bare
   # "fuzzel" off PATH (niri.kdl, Mod+D and the Mod+V clipboard pipe), which
   # is what makes this wrapper the one that runs, the same way foot's resolves
-  # in terminal.nix. The value is copied from footWrapped there, where the
-  # curve is explained and where it should be changed.
+  # in terminal.nix. The curve itself is freetypeProperties above.
   fuzzelWrapped = pkgs.symlinkJoin {
     name = "fuzzel-${pkgs.fuzzel.version}";
     paths = [ pkgs.fuzzel ];
     nativeBuildInputs = [ pkgs.makeWrapper ];
     postBuild = ''
       wrapProgram $out/bin/fuzzel \
-        --set FREETYPE_PROPERTIES \
-          "cff:no-stem-darkening=0 cff:darkening-parameters=500,500,1000,400,1667,300,2333,0"
+        --set FREETYPE_PROPERTIES "${freetypeProperties}"
     '';
   };
 
@@ -133,7 +150,7 @@ let
   # then rejected the unit for "Unbalanced quoting" and swayidle never ran --
   # no idle lock, no lock before suspend, and Mod+Shift+L did nothing.
   lockCommand = pkgs.writeShellScript "lock-screen" ''
-    export FREETYPE_PROPERTIES="cff:no-stem-darkening=0 cff:darkening-parameters=500,500,1000,400,1667,300,2333,0"
+    export FREETYPE_PROPERTIES="${freetypeProperties}"
     exec ${pkgs.swaylock}/bin/swaylock -f \
       --color 000000 \
       --inside-color 161819 \
@@ -365,14 +382,12 @@ in
     systemd.target = "niri.service";
   };
   # Stem darkening for the bar's JetBrains Mono, the same macOS-like weight
-  # foot draws. The value is copied from footWrapped in terminal.nix,
-  # which is where the curve is explained and where it should be changed; the
-  # two have to agree or the bar and the terminal under it come out at
-  # different weights. FreeType applies it to CFF outlines only, which is the
-  # build fontconfig picks for this family. waybar runs as a systemd user
-  # service, so the variable goes on the unit rather than in a wrapper.
-  systemd.user.services.waybar.environment.FREETYPE_PROPERTIES =
-    "cff:no-stem-darkening=0 cff:darkening-parameters=500,500,1000,400,1667,300,2333,0";
+  # foot draws: freetypeProperties above, which says where the curve lives
+  # and why the bar has to agree with the terminal under it. FreeType applies
+  # it to CFF outlines only, which is the build fontconfig picks for this
+  # family. waybar runs as a systemd user service, so the variable goes on
+  # the unit rather than in a wrapper.
+  systemd.user.services.waybar.environment.FREETYPE_PROPERTIES = freetypeProperties;
   environment.etc."xdg/waybar/config".source = waybarConfig;
   environment.etc."xdg/waybar/style.css".source = ./waybar.css;
 
@@ -385,14 +400,13 @@ in
   # Its config cannot live in /etc, so it is linked into ~/.config -- which
   # also means mako finds it when D-Bus activates it rather than systemd.
   # FREETYPE_PROPERTIES: stem darkening for its JetBrains Mono, on the same
-  # curve foot and waybar draw. The value is copied from footWrapped in
-  # terminal.nix, which is where it is explained and where it should be
-  # changed; they have to agree or notifications come out at a different
-  # weight from the bar and the terminal they sit over. mako links no GTK --
+  # curve foot and waybar draw -- freetypeProperties above. Without it
+  # notifications come out at a different weight from the bar and the
+  # terminal they sit over. mako links no GTK --
   # it is cairo and pango straight onto a layer surface -- so this is the
   # whole of what governs its weight.
   systemd.user.services.mako = sessionService // {
-    environment.FREETYPE_PROPERTIES = "cff:no-stem-darkening=0 cff:darkening-parameters=500,500,1000,400,1667,300,2333,0";
+    environment.FREETYPE_PROPERTIES = freetypeProperties;
   };
 
   systemd.tmpfiles.rules =
@@ -459,12 +473,14 @@ in
   # repo, which is public. -m fill scales it to cover the screen, cropping
   # rather than letterboxing.
   #
-  # The double quotes around the path are load-bearing: this file name has a
-  # space in it, and systemd splits ExecStart on whitespace, so unquoted it
-  # would reach swaybg as two arguments and the wallpaper would silently not
-  # appear. Specifiers are expanded inside quotes, so %h still resolves --
+  # The double quotes around the path are kept even though the file name
+  # below no longer needs them. systemd splits ExecStart on whitespace, so a
+  # name with a space in it -- which the previous wallpaper had -- would
+  # otherwise reach swaybg as two arguments and the wallpaper would silently
+  # not appear. Specifiers are expanded inside quotes, so %h still resolves:
   # verified by running the quoted form as a unit and having stat(1) report
-  # one argument and the expanded home. Do not "tidy" them away.
+  # one argument and the expanded home. Leaving them means the next image can
+  # be dropped in without this trap being rediscovered.
   systemd.user.services.swaybg = sessionService // {
     description = "Wallpaper";
     serviceConfig = {
@@ -488,14 +504,14 @@ in
   # Lock and the like) is not enabled: nothing here needs it.
   #
   # FREETYPE_PROPERTIES: the percentage is JetBrains Mono now (swayosd.css),
-  # so it wants the same stem darkening as the bar and the notifications. The
-  # value is copied from footWrapped in terminal.nix, where the curve is
-  # explained. swayosd is GTK4, so its text goes through Pango onto FreeType
+  # so it wants the same stem darkening as the bar and the notifications --
+  # freetypeProperties above. swayosd is GTK4, so its text goes through Pango
+  # onto FreeType
   # and the variable reaches it; it was not here while the label was a bitmap,
   # which FreeType antialiases nothing of and so cannot darken.
   systemd.user.services.swayosd = sessionService // {
     description = "On-screen display for volume and brightness";
-    environment.FREETYPE_PROPERTIES = "cff:no-stem-darkening=0 cff:darkening-parameters=500,500,1000,400,1667,300,2333,0";
+    environment.FREETYPE_PROPERTIES = freetypeProperties;
     serviceConfig = {
       ExecStart =
         let
@@ -608,9 +624,12 @@ in
   # with YAZI_CONFIG_HOME pointing at the generated config, so unlike the
   # other tools ~/.config/yazi is ignored. Edit this block instead.
   #
-  # The preset theme draws Nerd Font glyphs, and there is no Nerd Font here
-  # (same reason waybar and the snacks explorer use letters): they came out
-  # as tofu or as another font's fallback. Hence:
+  # The preset theme draws Nerd Font glyphs, which are stripped out below.
+  # As with waybar and the snacks explorer, that is now a choice rather than
+  # a limit: the glyphs would in fact resolve, since terminal.nix installs
+  # nerd-fonts.jetbrains-mono and its fontconfig rule puts that family right
+  # behind JetBrains Mono. Plain text is kept because it is the style of the
+  # tmux status bar and the rest of the session. Hence:
   programs.yazi = {
     enable = true;
     settings.theme = {

@@ -24,6 +24,12 @@ input {
             // /etc/X11/xorg.conf.d/00-keyboard.conf, which a Wayland
             // compositor never reads. The layout has to be repeated here, and
             // console.keyMap still covers the TTYs separately.
+            //
+            // That option is not dead config, though, so do not delete it on
+            // the strength of this note: nixpkgs generates that file from
+            // services.graphical-desktop (which greetd switches on), and
+            // localectl reads it to report the system layout. Three places
+            // state the layout for three different readers.
             layout "it"
         }
     }
@@ -234,9 +240,10 @@ binds {
     // Wayland surface, with none of the reverse-DNS validation a GTK
     // application ID has to pass -- so these are the plain names.
     //
-    // Nothing in this file matches on either id today: there are no
-    // window-rule blocks at all. They are kept because that is what the -a
-    // flags are for, and so a rule can be written later.
+    // Nothing matches on either id today: the one window-rule in this file
+    // (above, the rounded corners) deliberately has no `match` and so
+    // applies to everything. These ids are kept because that is what the -a
+    // flags are for, and so a rule can single either one out later.
     //
     // yazi is the file manager that replaces Nautilus.
     Mod+E hotkey-overlay-title="Files: yazi" { spawn "foot" "-a" "yazi" "yazi"; }

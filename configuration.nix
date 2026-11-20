@@ -13,8 +13,17 @@
     ./desktop.nix
   ];
 
-  boot.initrd.luks.devices."luks-8187315b-979b-4665-a691-f00ec33b0965".allowDiscards = true;
-  boot.initrd.luks.devices."luks-d0394890-6673-4b1a-9c18-5c910f13aa1c".allowDiscards = true;
+  # TRIM through to the NVMe for both encrypted volumes: the root filesystem
+  # (declared by hardware-configuration.nix) and the swap partition, whose
+  # device node is named below. Off by default, because allowing discards
+  # lets an attacker with the disk see which blocks are unused.
+  boot.initrd.luks.devices = {
+    "luks-8187315b-979b-4665-a691-f00ec33b0965".allowDiscards = true;
+    "luks-d0394890-6673-4b1a-9c18-5c910f13aa1c" = {
+      allowDiscards = true;
+      device = "/dev/disk/by-uuid/d0394890-6673-4b1a-9c18-5c910f13aa1c";
+    };
+  };
 
   # Compressed swap in RAM
   zramSwap.enable = true;
@@ -80,8 +89,6 @@
   # Use latest kernel.
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
-  boot.initrd.luks.devices."luks-d0394890-6673-4b1a-9c18-5c910f13aa1c".device =
-    "/dev/disk/by-uuid/d0394890-6673-4b1a-9c18-5c910f13aa1c";
   networking.hostName = "x395"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
 
@@ -133,7 +140,14 @@
   # login screen, all in desktop.nix. GNOME was removed in migration phase 3;
   # the services and apps worth keeping from it are declared there.
 
-  # Configure keymap in X11
+  # The layout for everything that is not niri and not a TTY. No X server
+  # runs here, so this looks like dead config and is not: nixpkgs builds
+  # /etc/X11/xorg.conf.d/00-keyboard.conf out of it from
+  # services.graphical-desktop, which greetd switches on, and localectl
+  # reads that file to report the system layout. niri takes its own copy
+  # (niri.kdl's xkb block, which says why it has to) and the TTYs take
+  # console.keyMap below, so the layout is stated three times for three
+  # readers. Keep them in step.
   services.xserver.xkb = {
     layout = "it";
     variant = "";
@@ -157,9 +171,6 @@
     # jack.enable = true;
   };
 
-  # Enable touchpad support (enabled default in most desktopManager).
-  # services.libinput.enable = true;
-
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users."edo" = {
     isNormalUser = true;
@@ -167,9 +178,6 @@
     extraGroups = [
       "networkmanager"
       "wheel"
-    ];
-    packages = [
-      #  pkgs.thunderbird
     ];
   };
 

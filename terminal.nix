@@ -1,7 +1,9 @@
 # Port of the Fedora configuration for tmux, fish and the terminal, which
 # was Alacritty there and is foot here.
-# Import it from configuration.nix:
-#   imports = [ ./hardware-configuration.nix ./terminal.nix ];
+# Import it from configuration.nix, which today imports:
+#   imports = [
+#     ./hardware-configuration.nix ./terminal.nix ./nix-builds.nix ./desktop.nix
+#   ];
 #
 # weechat is deliberately not managed here: it rewrites its own config files at
 # runtime and irc.conf holds credentials, so it stays as mutable files under
@@ -323,8 +325,12 @@ in
 
       cursor.blink = "no";
 
-      # decorations = "None". GNOME has no server-side decorations, so without
-      # this foot would draw its own title bar.
+      # decorations = "None". foot draws its own title bar unless it is told
+      # the compositor will; niri does, and niri.kdl asks every client to let
+      # it (prefer-no-csd there). This is foot's half of that agreement, and
+      # it is why foot and the GTK apps come out with the same chrome. Under
+      # GNOME, which had no server-side decorations at all, this line was
+      # what kept the title bar off.
       csd.preferred = "none";
 
       key-bindings = {

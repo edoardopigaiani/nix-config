@@ -1,6 +1,8 @@
 # Keep nixos-rebuild from monopolising this laptop.
-# Import it from configuration.nix:
-#   imports = [ ./hardware-configuration.nix ./terminal.nix ./nix-builds.nix ];
+# Import it from configuration.nix, which today imports:
+#   imports = [
+#     ./hardware-configuration.nix ./terminal.nix ./nix-builds.nix ./desktop.nix
+#   ];
 
 { ... }:
 

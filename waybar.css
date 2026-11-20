@@ -56,11 +56,17 @@
    * through font-hinting = "none" in the dconf block would have been global
    * to every GTK app, which is why it is not done there.
    *
-   * The modules stay plain-text labels (B:, V:, L:, N:, Idle). Note that is
-   * now a choice rather than a limit: Tamzen covered only ASCII, but the
-   * fontconfig rule in terminal.nix appends JetBrainsMono Nerd Font behind
-   * this family, so icon glyphs would in fact resolve if a format asked for
-   * them. */
+   * The modules stay plain text: "B:" in front of the battery percentage and
+   * the single letters C and I for the idle inhibitor, the clock and window
+   * title being bare text already. The volume, brightness and network
+   * labels this list used to name are gone with their modules -- swayosd
+   * shows the first two when the keys are pressed, and the rest is managed
+   * in a terminal (desktop.nix says which tools).
+   *
+   * Plain text is now a choice rather than a limit: Tamzen covered only
+   * ASCII, but the fontconfig rule in terminal.nix appends JetBrainsMono
+   * Nerd Font behind this family, so icon glyphs would in fact resolve if a
+   * format asked for them. */
   font-family: "JetBrains Mono", monospace;
   font-size: 12px;
   /* GTK draws a rounded shadow on tooltips and menus otherwise. */
@@ -82,8 +88,13 @@ window#waybar {
   color: @foreground;
 }
 
-/* Every module gets the same breathing room; the bar is 10px padded on the
- * sides to line up with foot's own 10x10 padding. */
+/* Every module gets the same breathing room. The two paddings stack: this
+ * 4px on the module group plus the 8px each module carries below puts the
+ * first label 12px from the screen edge, where foot's own padding is 10.
+ * Two pixels out, which is close enough that the bar and a maximised
+ * terminal still read as one column of text; dropping this to 2px would
+ * line them up exactly, at the cost of the groups sitting tighter
+ * together. */
 .modules-left,
 .modules-center,
 .modules-right {
