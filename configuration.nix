@@ -208,6 +208,8 @@
     zed-editor
     btop
     apostrophe
+    tor-browser
+    yt-dlp
   ];
 
   programs.nix-ld.enable = true;
