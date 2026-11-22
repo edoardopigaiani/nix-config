@@ -122,6 +122,42 @@ in
 
   users.users."edo".shell = pkgs.fish;
 
+  # -------------------------------------------------------------- direnv
+  # Per-directory environments: on every cd, direnv looks for an .envrc and
+  # loads what it declares, unloading it again on the way out. For a project
+  # with a flake that file is one line, `use flake`, and entering the
+  # directory then puts its devshell on PATH -- so a project's toolchain
+  # never has to be installed system-wide to be usable.
+  #
+  # One line covers it: the module's nix-direnv and enableFishIntegration
+  # options both default to true, so there is nothing to add for either.
+  # nix-direnv is the part that makes this worth having -- plain direnv would
+  # re-run `nix develop` on every entry, and the result would be
+  # garbage-collectable, so `nh os clean` would make the next entry recompile.
+  # It caches the environment and keeps a gc root on it instead, which both
+  # makes re-entry instant and protects it from the weekly clean in
+  # configuration.nix.
+  #
+  # An .envrc is a shell script that runs on cd, so direnv refuses to load
+  # one until `direnv allow` has been run in that directory, and again after
+  # every edit. A freshly cloned repo saying ".envrc is blocked" is that
+  # working as intended, not a fault.
+  #
+  # Logging is left on (the module's `silent` default): the "direnv: loading"
+  # line is how you know which environment you are in.
+  programs.direnv.enable = true;
+
+  # -------------------------------------------------------------- zoxide
+  # `z <fragment>` jumps to the directory matching it that has been visited
+  # most often and most recently, so `z nix` reaches this repository from
+  # anywhere. Fish integration is on by default, as with direnv.
+  #
+  # It does not replace cd: the module leaves plain cd alone, and fish's own
+  # Alt+Up directory history still works. This is the shortcut for the three
+  # or four trees actually worked in, which is also why it earns less here
+  # than direnv does.
+  programs.zoxide.enable = true;
+
   # ---------------------------------------------------------------- tmux
   programs.tmux = {
     enable = true;
@@ -600,6 +636,14 @@ in
     wl-clipboard # wl-copy/wl-paste; backs tmux's copy-command above
     ripgrep # rg, for snacks' and Claude's searches
     fd
+    # zoxide shells out to fzf for its interactive mode (`zi`, and `z` with
+    # an ambiguous fragment); the plain `z` jump needs nothing. The binary is
+    # all that is wanted here: programs.fzf.keybindings is deliberately NOT
+    # set, because on fish that option sources fzf_key_bindings, which takes
+    # over Ctrl+R and Alt+C -- and fish's own history pager on Ctrl+R is
+    # better than fzf's flat list for a shell with autosuggestions. Enable
+    # that option if the trade ever looks worth it.
+    fzf
     nixd # Nix language server, enabled in nvim.lua
     nixfmt # what nixd formats with, on save in Neovim
     lua-language-server # lua_ls, enabled in nvim.lua

@@ -4,7 +4,8 @@
 # all.
 #
 # What is deliberately NOT here:
-#   - terminal.nix   foot, fish, tmux, Neovim, micro and the terminal fonts
+#   - terminal.nix   foot, fish, tmux, Neovim, micro, the shell tools that
+#                    go with them (direnv, zoxide) and the terminal fonts
 #   - nix-builds.nix what a rebuild is allowed to do to a 4-thread laptop
 #   - desktop.nix    the niri session and everything that replaced GNOME
 #
