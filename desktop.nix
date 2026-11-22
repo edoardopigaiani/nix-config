@@ -180,12 +180,19 @@ let
   # Nix would corrupt -- the same split terminal.nix makes between the foot
   # module and the files it links instead, nvim.lua and darkblue.micro.
   #
-  # Note what is NOT here: glyph icons -- and that it is now a choice rather
-  # than a limit. Tamzen covered only ASCII and part of Latin-1, so icon
-  # formats really would have drawn tofu; the bar is on JetBrains Mono now,
-  # with the Nerd Font appended behind it by the fontconfig rule in
-  # terminal.nix, so they would resolve. The text labels below are kept
-  # because they are in the style of the tmux status bar.
+  # The state modules draw Nerd Font glyphs, which resolve without any font
+  # being named here: the fontconfig rule in terminal.nix appends
+  # JetBrainsMono Nerd Font behind JetBrains Mono for anything that asks for
+  # the latter. Under the Tamzen bitmap this file was on before, which
+  # covered only ASCII and part of Latin-1, the same formats would have drawn
+  # tofu.
+  #
+  # The two spaces between a glyph and its text are deliberate, not a typo to
+  # tidy away. waybar hands the whole format string to Pango as one label,
+  # and the proportional Nerd Font cut leaves almost no side bearing on the
+  # icons, so a single space reads as none. If two now looks too airy, the
+  # other direction is one space plus a thin space (U+2009) rather than going
+  # back to one.
   #
   # No module here spawns anything on click, so none of them needs an absolute
   # store path: waybar runs as a systemd user service whose PATH does not
@@ -226,7 +233,7 @@ let
 
     # The time only, HH:MM; the date, YYYY-MM-DD, is in the tooltip.
     clock = {
-      format = " {:%H:%M}";
+      format = "  {:%H:%M}";
       tooltip-format = "{:%Y-%m-%d}";
     };
 
@@ -246,14 +253,14 @@ let
         ""
         ""
       ];
-      format = "{icon} {capacity}%";
+      format = "{icon}  {capacity}%";
       # The bolt replaces the "+" this used to append, and carries the same
       # meaning: plugged in but not charging (held by the tlp thresholds)
       # reads exactly like running on battery, because waybar.css paints
       # every battery state the same white. The bolt is the one thing on the
       # bar that distinguishes the two.
-      format-charging = " {capacity}%";
-      format-plugged = "{icon} {capacity}%";
+      format-charging = "  {capacity}%";
+      format-plugged = "{icon}  {capacity}%";
       tooltip-format = "{timeTo}\n{power:0.1f}W";
     };
 
