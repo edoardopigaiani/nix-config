@@ -36,6 +36,23 @@
     };
   };
 
+  # Where to write the hibernation image, and where to look for it at boot.
+  # Without this the kernel gets no resume= and hibernating loses the session:
+  # the image is written and then never read back. systemd-boot and the
+  # systemd initrd need nothing else -- the initrd already unlocks this
+  # volume (above), so the device exists by the time resume is attempted.
+  #
+  # This is the swap signature's UUID, not the LUKS container's: the
+  # container is d0394890..., and what resume needs is the swap inside it,
+  # which is the /dev/mapper device. Named by UUID rather than by
+  # /dev/mapper/luks-... so it does not depend on the mapper naming, but note
+  # it does change if the partition is ever re-made with mkswap.
+  #
+  # The image fits: the partition is 8.8 GiB against 5.7 GiB of RAM. zram
+  # above is a second, higher-priority swap and is irrelevant here --
+  # hibernation goes to the device named here, not to the best-priority one.
+  boot.resumeDevice = "/dev/disk/by-uuid/99e9858b-28b3-44ce-8f13-68d3d5f5ab05";
+
   # Compressed swap in RAM
   zramSwap.enable = true;
 

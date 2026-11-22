@@ -560,7 +560,16 @@ in
   # services.desktopManager.gnome and comparing the result.
   services.udisks2.enable = true; # the mount backend udiskie drives
   services.gvfs.enable = true; # trash:// and network mounts for yazi/Nautilus
-  services.upower.enable = true; # the battery data waybar reads
+  # The battery data waybar reads, and what happens when it runs out.
+  # criticalPowerAction defaults to PowerOff, which loses whatever is open;
+  # hibernating keeps it, and is possible now that configuration.nix names a
+  # resumeDevice. upower fires this at its own last-ditch threshold (2% by
+  # default), well after waybar's critical state has been blinking red at
+  # 10%.
+  services.upower = {
+    enable = true;
+    criticalPowerAction = "Hibernate";
+  };
   # libinput's udev rules (touchpad fuzz overrides, device groups). niri
   # links libinput itself, but nothing else installs the rules.
   services.libinput.enable = true;
@@ -689,9 +698,30 @@ in
   # both the rules and the group membership the XF86MonBrightness keys bound
   # in niri.kdl silently do nothing.
   services.udev.packages = [ pkgs.brightnessctl ];
+
+  # ---------------------------------------------------------------- scanner
+  # simple-scan is in the package list below and could not see a device
+  # without this: it talks to scanners only through SANE, and nothing else
+  # here installs the backends. hardware.sane also brings the udev rules that
+  # hand a scanner's USB node to the "scanner" group.
+  #
+  # sane-airscan covers the driverless protocols (eSCL and WSD) that network
+  # and most recent USB multifunction units speak, which is the case a
+  # backend-per-model list misses. It is additive: the stock backends still
+  # handle everything they handled.
+  hardware.sane = {
+    enable = true;
+    extraBackends = [ pkgs.sane-airscan ];
+  };
+
+  # One list, because this is a single module and the option cannot be
+  # defined twice in it; configuration.nix adds networkmanager and wheel from
+  # its side, which merges. What each one is for:
   users.users.edo.extraGroups = [
-    "video"
-    "input"
+    "video" # brightnessctl's backlight node, above
+    "input" # and its keyboard-LED node
+    "scanner" # SANE's USB scanners, for simple-scan
+    "lp" # a scanner built into a printer, which lands under lp instead
   ];
 
   # ------------------------------------------------------------- theming
