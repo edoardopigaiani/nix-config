@@ -37,13 +37,14 @@
 # extension). foot's colors-dark block in terminal.nix is the reference copy
 # -- it is ported straight from the theme's own terminal keys, and every
 # other file follows it: niri.kdl, waybar.css, mako.conf, swayosd.css,
-# fuzzel.ini, swaylock below, console.colors below and Neovim's
-# noir_essence.lua.
+# fuzzel.ini, swaylock below, console.colors below, Neovim's
+# noir_essence.lua and Zed's theme, which terminal.nix generates.
 #
 # Be careful with values carried over from before the move: this config has
 # been on ayu-vim's dark, on Flexoki, on Zed's "Ayu Classic OLED" and on
-# gruvbox, and Zed itself is on none of those now. Anything not matching the
-# list above is stale.
+# gruvbox. Anything not matching the list above is stale. Zed was the last
+# holdout and is on this palette too now -- terminal.nix builds its theme --
+# so there is no longer an editor in the session drawing something else.
 #
 # The palette names three greys by role rather than by ANSI number, and those
 # do most of the work in the chrome. #161819 is the strip grey

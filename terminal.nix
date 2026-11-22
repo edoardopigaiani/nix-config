@@ -53,6 +53,341 @@ let
     '';
   };
 
+  # ----------------------------------------------------------- Zed's theme
+  # "Noir Essence Dark" for Zed, the last thing in the session that was on a
+  # palette of its own. It is ported from the same place everything else is:
+  # the VS Code theme's own keys, with foot's colors-dark below as the
+  # reference copy, so Zed's editor, its integrated terminal and the foot
+  # window next to it are finally one set of colours.
+  #
+  # Written as Nix rather than as a JSON file for the reason the waybar
+  # config in desktop.nix gives: JSON has no syntax Nix would corrupt, and
+  # unlike KDL or CSS it has no comments either -- so a hand-written theme
+  # would be 170 opaque hex values. Here the palette is named once and every
+  # assignment can say which role it serves. pkgs.formats.json turns it back
+  # into the file Zed reads.
+  #
+  # Zed only loads user themes from ~/.config/zed/themes, a path neither /etc
+  # nor a flag can reach, so it is linked there with systemd.tmpfiles -- the
+  # mechanism micro's colorscheme and mako's config already use. The link is
+  # forced on every rebuild, so edit this block and not the file under
+  # ~/.config.
+  #
+  # Selecting it is left to Zed, which keeps the choice in its own mutable
+  # settings.json, exactly as micro does. That file is deliberately not
+  # managed here: Zed rewrites it whenever a setting changes in the UI.
+  zedPalette = {
+    # The two backgrounds. black is what foot was asked for and what the
+    # editor draws on; strip is editorWidget.background, the one step off
+    # black every bar in the session is already on -- waybar, mako, tmux,
+    # weechat, Neovim's statusline -- and here it is Zed's status bar and its
+    # popups.
+    black = "#000000";
+    strip = "#161819";
+
+    fg = "#f7f3ea"; # editor.foreground
+    muted = "#908e89"; # statusBar.foreground, flattened; dimmed UI text
+    dim = "#3e3d3b"; # tab.inactiveForeground, flattened; disabled text
+    comment = "#51504d";
+    lineNr = "#2e2e2c"; # editorLineNumber.foreground, flattened
+    indent = "#1b1b1a"; # editorIndentGuide.background, flattened
+    lineHl = "#0a0a0a"; # editor.lineHighlightBackground, flattened
+
+    selection = "#2b2d2d"; # editor.selectionBackground, and the ansi black
+    widgetSel = "#1f2121"; # editorSuggestWidget.selectedBackground
+    brightBlack = "#434545"; # terminal.ansiBrightBlack: hairlines, scrollbar
+    split = "#444444"; # editorGroup.border, the pane divider
+
+    # The hues, named by what the theme calls them rather than by ANSI slot,
+    # which is why yellow and orange are two colours here while foot's
+    # palette has to put the orange in its yellow slot.
+    red = "#ea6962";
+    orange = "#e78a4e";
+    yellow = "#e7b24e";
+    string = "#98c379";
+    lime = "#a9b665"; # the accent: the cursor, and foot's ansi cyan
+    green = "#89b482"; # terminal.ansiGreen
+    blue = "#7daea3"; # operators, escapes, and textLink.foreground
+    func = "#7d97ae"; # function names
+    purple = "#d3869b";
+    warn = "#eac262"; # editorWarning.foreground, without its alpha
+    info = "#658ecd"; # editorInfo.foreground, without its alpha
+
+    findMatch = "#4d2e1a"; # editor.findMatchHighlightBackground, flattened
+    wordHl = "#3f3f3f"; # editor.wordHighlightBackground, flattened
+    wordHlStrong = "#363938"; # editor.wordHighlightStrongBackground
+    gutterAdd = "#a8b665"; # editorGutter.addedBackground, a hair off the lime
+    diffAdd = "#222414";
+    diffDelete = "#2f1514";
+    diffChange = "#192321";
+    transparent = "#00000000";
+  };
+
+  zedTheme =
+    let
+      p = zedPalette;
+      # Zed wants every syntax entry to carry all four fields.
+      syn = color: {
+        inherit color;
+        background_color = null;
+        font_style = null;
+        font_weight = null;
+      };
+      synItalic = color: (syn color) // { font_style = "italic"; };
+      synBold = color: (syn color) // { font_weight = 700; };
+      # A collaboration cursor and the selection it drags behind it, at the
+      # 0x40 alpha Zed's own themes use.
+      player = color: {
+        cursor = color;
+        selection = "${color}40";
+      };
+    in
+    (pkgs.formats.json { }).generate "noir-essence-zed.json" {
+      "$schema" = "https://zed.dev/schema/themes/v0.2.0.json";
+      name = "Noir Essence Dark";
+      author = "ported from u1145h.u1145h-heme-ark for this configuration";
+      themes = [
+        {
+          name = "Noir Essence Dark";
+          appearance = "dark";
+          style = {
+            # --------------------------------------------------- surfaces
+            # The editor is black and the chrome is the strip grey, which is
+            # the division the rest of the session already draws: a bar is
+            # #161819 and the text under it is black. Tabs are the exception
+            # and stay on the editor background, as they do in VS Code and in
+            # Neovim's tabline.
+            background = p.black;
+            "editor.background" = p.black;
+            "editor.gutter.background" = p.black;
+            "toolbar.background" = p.black;
+            "tab_bar.background" = p.black;
+            "tab.active_background" = p.black;
+            "tab.inactive_background" = p.black;
+            "status_bar.background" = p.strip;
+            "title_bar.background" = p.strip;
+            "surface.background" = p.strip;
+            "elevated_surface.background" = p.strip;
+            # The file tree is black rather than the panel grey, so it reads
+            # as part of the editor -- the same call noir_essence.lua makes
+            # for the snacks explorer, overriding snacks' own widget grey.
+            "panel.background" = p.black;
+            "editor.subheader.background" = p.strip;
+
+            # ---------------------------------------------------- borders
+            border = p.split;
+            "border.variant" = p.selection;
+            "border.focused" = p.blue;
+            "border.selected" = p.brightBlack;
+            "border.transparent" = p.transparent;
+            "border.disabled" = p.selection;
+            "panel.focused_border" = p.blue;
+            "pane.focused_border" = p.blue;
+
+            # --------------------------------------------------- elements
+            "element.background" = p.strip;
+            "element.hover" = p.widgetSel;
+            "element.active" = p.selection;
+            "element.selected" = p.selection;
+            "element.disabled" = p.strip;
+            "ghost_element.background" = p.transparent;
+            "ghost_element.hover" = p.widgetSel;
+            "ghost_element.active" = p.selection;
+            "ghost_element.selected" = p.selection;
+            "ghost_element.disabled" = p.transparent;
+            "drop_target.background" = "${p.selection}80";
+
+            # ------------------------------------------------ text, icons
+            text = p.fg;
+            "text.muted" = p.muted;
+            "text.placeholder" = p.comment;
+            "text.disabled" = p.dim;
+            "text.accent" = p.blue;
+            icon = p.fg;
+            "icon.muted" = p.muted;
+            "icon.placeholder" = p.comment;
+            "icon.disabled" = p.dim;
+            "icon.accent" = p.blue;
+            "link_text.hover" = p.blue;
+
+            # ----------------------------------------------------- editor
+            "editor.foreground" = p.fg;
+            "editor.active_line.background" = p.lineHl;
+            "editor.highlighted_line.background" = p.widgetSel;
+            "editor.line_number" = p.lineNr;
+            "editor.active_line_number" = p.fg;
+            # The theme's editorWhitespace.foreground, which is the lime --
+            # loud for an invisible, but it is what Neovim's listchars are
+            # drawn in too, so the two agree.
+            "editor.invisible" = p.lime;
+            "editor.wrap_guide" = p.indent;
+            "editor.active_wrap_guide" = p.selection;
+            "editor.indent_guide" = p.indent;
+            "editor.indent_guide_active" = p.dim;
+            "editor.document_highlight.read_background" = p.wordHl;
+            "editor.document_highlight.write_background" = p.wordHlStrong;
+            "editor.document_highlight.bracket_background" = p.selection;
+            "search.match_background" = p.findMatch;
+
+            # -------------------------------------------------- scrollbar
+            "scrollbar.thumb.background" = "${p.brightBlack}80";
+            "scrollbar.thumb.hover_background" = p.brightBlack;
+            "scrollbar.thumb.border" = p.transparent;
+            "scrollbar.track.background" = p.transparent;
+            "scrollbar.track.border" = p.transparent;
+
+            # --------------------------------------------------- terminal
+            # foot's regular0-7 and bright0-7 verbatim, so a shell inside Zed
+            # looks like the shell outside it. Note the slots the theme fills
+            # oddly: ansi yellow is the orange and ansi cyan is the lime,
+            # exactly as colors-dark below has them.
+            #
+            # The dim_* slots repeat their regular values. foot has no dim
+            # block at all -- the theme names no faint half, and writing one
+            # would mean inventing colours it does not have -- but Zed has
+            # the keys and would fill them itself, so they are pinned to the
+            # value they are dimming instead.
+            "terminal.background" = p.black;
+            "terminal.foreground" = p.fg;
+            "terminal.bright_foreground" = p.fg;
+            "terminal.dim_foreground" = p.muted;
+            "terminal.ansi.black" = p.black;
+            "terminal.ansi.bright_black" = p.brightBlack;
+            "terminal.ansi.dim_black" = p.black;
+            "terminal.ansi.red" = p.red;
+            "terminal.ansi.bright_red" = p.red;
+            "terminal.ansi.dim_red" = p.red;
+            "terminal.ansi.green" = p.green;
+            "terminal.ansi.bright_green" = p.green;
+            "terminal.ansi.dim_green" = p.green;
+            "terminal.ansi.yellow" = p.orange;
+            "terminal.ansi.bright_yellow" = p.orange;
+            "terminal.ansi.dim_yellow" = p.orange;
+            "terminal.ansi.blue" = p.blue;
+            "terminal.ansi.bright_blue" = p.blue;
+            "terminal.ansi.dim_blue" = p.blue;
+            "terminal.ansi.magenta" = p.purple;
+            "terminal.ansi.bright_magenta" = p.purple;
+            "terminal.ansi.dim_magenta" = p.purple;
+            "terminal.ansi.cyan" = p.lime;
+            "terminal.ansi.bright_cyan" = p.lime;
+            "terminal.ansi.dim_cyan" = p.lime;
+            "terminal.ansi.white" = p.fg;
+            "terminal.ansi.bright_white" = p.fg;
+            "terminal.ansi.dim_white" = p.fg;
+
+            # ----------------------------------------- status and version
+            # The backgrounds are the theme's own diff fills where it has
+            # them and the strip grey where it does not, rather than an
+            # invented tint per state.
+            error = p.red;
+            "error.background" = p.diffDelete;
+            "error.border" = p.red;
+            warning = p.warn;
+            "warning.background" = p.strip;
+            "warning.border" = p.warn;
+            info = p.info;
+            "info.background" = p.strip;
+            "info.border" = p.info;
+            hint = p.blue;
+            "hint.background" = p.strip;
+            "hint.border" = p.blue;
+            success = p.green;
+            "success.background" = p.diffAdd;
+            "success.border" = p.green;
+            created = p.gutterAdd;
+            "created.background" = p.diffAdd;
+            "created.border" = p.gutterAdd;
+            deleted = p.red;
+            "deleted.background" = p.diffDelete;
+            "deleted.border" = p.red;
+            modified = p.blue;
+            "modified.background" = p.diffChange;
+            "modified.border" = p.blue;
+            renamed = p.yellow;
+            "renamed.background" = p.strip;
+            "renamed.border" = p.yellow;
+            conflict = p.purple;
+            "conflict.background" = p.strip;
+            "conflict.border" = p.purple;
+            ignored = p.comment;
+            "ignored.background" = p.transparent;
+            "ignored.border" = p.comment;
+            hidden = p.dim;
+            "hidden.background" = p.transparent;
+            "hidden.border" = p.dim;
+            predictive = p.comment;
+            "predictive.background" = p.transparent;
+            "predictive.border" = p.comment;
+            unreachable = p.muted;
+            "unreachable.background" = p.transparent;
+            "unreachable.border" = p.muted;
+
+            # ---------------------------------------------------- players
+            # Collaboration cursors. The first is the theme's accent, the
+            # colour the terminal cursor is drawn in; the rest walk the
+            # palette's hues so two people are never the same colour.
+            players = map player [
+              p.lime
+              p.blue
+              p.purple
+              p.orange
+              p.red
+              p.green
+              p.yellow
+              p.func
+            ];
+
+            # ----------------------------------------------------- syntax
+            # The group-for-group counterpart of noir_essence.lua: the same
+            # tokenColors assignments, named for Zed's capture names rather
+            # than treesitter's.
+            syntax = {
+              attribute = syn p.yellow; # storage.type.annotation
+              boolean = syn p.orange;
+              comment = synItalic p.comment;
+              "comment.doc" = synItalic p.comment;
+              constant = syn p.yellow; # variable.other.constant
+              constructor = syn p.yellow; # entity.name.class
+              emphasis = synItalic p.purple;
+              "emphasis.strong" = synBold p.orange;
+              enum = syn p.yellow; # the type itself
+              variant = syn p.blue; # its members, per semanticTokenColors
+              function = syn p.func;
+              hint = syn p.comment; # inlay hints
+              keyword = syn p.purple;
+              label = syn p.purple;
+              link_text = syn p.func;
+              link_uri = synItalic p.purple;
+              number = syn p.orange;
+              operator = syn p.blue;
+              predictive = syn p.comment;
+              preproc = syn p.purple;
+              primary = syn p.fg;
+              property = syn p.red; # meta.object-literal.key
+              punctuation = syn p.fg;
+              "punctuation.bracket" = syn p.fg;
+              "punctuation.delimiter" = syn p.fg;
+              "punctuation.list_marker" = syn p.red;
+              "punctuation.special" = syn p.purple;
+              string = syn p.string;
+              "string.escape" = syn p.blue;
+              "string.regex" = syn p.blue;
+              "string.special" = syn p.blue;
+              "string.special.symbol" = syn p.blue;
+              tag = syn p.red; # entity.name.tag
+              "tag.doctype" = syn p.purple;
+              "text.literal" = syn p.string;
+              title = synBold p.red;
+              type = syn p.yellow;
+              variable = syn p.red;
+              "variable.special" = syn p.yellow; # variable.language
+            };
+          };
+        }
+      ];
+    };
+
 in
 {
   # ---------------------------------------------------------------- fish
@@ -480,13 +815,22 @@ in
   # itself needs no porting: it is written entirely in ANSI names, so micro
   # draws whatever colors-dark above holds, and its bars follow along by
   # reading palette entry 235 like weechat.
+  # One list for both editors' colorschemes: this is a single module, so the
+  # option cannot be defined twice in it. desktop.nix adds mako's link from
+  # its side and the definitions merge.
   systemd.tmpfiles.rules =
     let
       microDir = "${config.users.users.edo.home}/.config/micro/colorschemes";
+      zedDir = "${config.users.users.edo.home}/.config/zed/themes";
     in
     [
       "d ${microDir} 0755 edo users -"
       "L+ ${microDir}/darkblue.micro - - - - ${./darkblue.micro}"
+      # The Zed theme built in the let block above. Zed scans this directory
+      # and offers whatever it finds by the "name" inside the file, which is
+      # "Noir Essence Dark" -- the file name itself is not what gets picked.
+      "d ${zedDir} 0755 edo users -"
+      "L+ ${zedDir}/noir-essence.json - - - - ${zedTheme}"
     ];
 
   # -------------------------------------------------------------- neovim

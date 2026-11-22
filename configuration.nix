@@ -5,7 +5,9 @@
 #
 # What is deliberately NOT here:
 #   - terminal.nix   foot, fish, tmux, Neovim, micro, the shell tools that
-#                    go with them (direnv, zoxide) and the terminal fonts
+#                    go with them (direnv, zoxide), the terminal fonts, and
+#                    the colourschemes for the editors -- Zed's included,
+#                    though Zed itself is installed from here
 #   - nix-builds.nix what a rebuild is allowed to do to a 4-thread laptop
 #   - desktop.nix    the niri session and everything that replaced GNOME
 #
@@ -242,7 +244,7 @@
     spotify
     mpv
     glow
-    zed-editor
+    zed-editor # themed by terminal.nix, which builds its colourscheme
     btop
     apostrophe
     tor-browser
