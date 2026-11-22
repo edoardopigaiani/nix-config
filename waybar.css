@@ -56,17 +56,25 @@
    * through font-hinting = "none" in the dconf block would have been global
    * to every GTK app, which is why it is not done there.
    *
-   * The modules stay plain text: "B:" in front of the battery percentage and
-   * the single letters C and I for the idle inhibitor, the clock and window
-   * title being bare text already. The volume, brightness and network
-   * labels this list used to name are gone with their modules -- swayosd
-   * shows the first two when the keys are pressed, and the rest is managed
-   * in a terminal (desktop.nix says which tools).
+   * The state modules are icons: a battery that follows the charge across
+   * five glyphs, a bolt while it is actually charging, a clock, and a cup or
+   * a moon for the idle inhibitor (desktop.nix sets the formats). The
+   * workspace indices and the window title stay text, being text by nature.
    *
-   * Plain text is now a choice rather than a limit: Tamzen covered only
-   * ASCII, but the fontconfig rule in terminal.nix appends JetBrainsMono
-   * Nerd Font behind this family, so icon glyphs would in fact resolve if a
-   * format asked for them. */
+   * None of those glyphs is in JetBrains Mono. They resolve because the
+   * fontconfig rule in terminal.nix appends JetBrainsMono Nerd Font behind
+   * this family for every pattern that asks for it, so the font-family above
+   * needs no second name -- verified with
+   * `fc-match "JetBrains Mono:charset=F240"`, which answers with the Nerd
+   * Font. What arrives is the proportional cut rather than the "Mono" one
+   * foot pins; in a terminal that would be too wide for a cell, but here
+   * Pango lays out by the glyph's own advance and the wider icons read
+   * better.
+   *
+   * The terminal tools went the other way on purpose and stayed textual --
+   * yazi, the snacks explorer, tmux, weechat, micro. The split is between
+   * the desktop chrome and the things running inside a terminal grid, not an
+   * oversight in either. */
   font-family: "JetBrains Mono", monospace;
   font-size: 12px;
   /* A reset, not the look: this zero keeps GTK from putting its own rounded
@@ -152,7 +160,7 @@ window#waybar.empty #window {
 
 /* ----------------------------------------------------------------- state */
 /* The battery is white whether it is charging, plugged, full or draining. The
- * only hint left about mains is the "+" that format-charging appends while it
+ * only hint left about mains is the bolt that format-charging shows while it
  * actually refills (desktop.nix); plugged-but-held by the tlp thresholds
  * reads exactly like running on battery, which is the trade for one colour
  * across the bar. Only the two low-charge warnings below break the white, and
@@ -174,8 +182,8 @@ window#waybar.empty #window {
   }
 }
 
-/* "C" while the idle lock is inhibited, "I" when it is not. Orange is the
- * deliberately-odd state: something is holding the screen awake. */
+/* The cup while the idle lock is inhibited, the moon when it is not. Orange
+ * is the deliberately-odd state: something is holding the screen awake. */
 #idle_inhibitor.activated {
   color: @orange;
 }

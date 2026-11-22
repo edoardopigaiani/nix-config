@@ -226,7 +226,7 @@ let
 
     # The time only, HH:MM; the date, YYYY-MM-DD, is in the tooltip.
     clock = {
-      format = "{:%H:%M}";
+      format = " {:%H:%M}";
       tooltip-format = "{:%Y-%m-%d}";
     };
 
@@ -235,13 +235,25 @@ let
         warning = 25;
         critical = 10;
       };
-      format = "B: {capacity}%";
-      format-charging = "B: {capacity}% +";
-      # Plugged in but not charging (held by the tlp thresholds): no marker,
-      # the same as on battery. "+" appears only while it actually charges,
-      # and since waybar.css paints every battery state the same white, that
-      # "+" is the only thing on the bar that distinguishes the two.
-      format-plugged = "B: {capacity}%";
+      # Five icons, low to high: waybar indexes this list by capacity, so the
+      # glyph follows the charge rather than being decoration. They come from
+      # the Nerd Font that terminal.nix's fontconfig rule appends behind
+      # JetBrains Mono, which is why no font has to be named here.
+      format-icons = [
+        ""
+        ""
+        ""
+        ""
+        ""
+      ];
+      format = "{icon} {capacity}%";
+      # The bolt replaces the "+" this used to append, and carries the same
+      # meaning: plugged in but not charging (held by the tlp thresholds)
+      # reads exactly like running on battery, because waybar.css paints
+      # every battery state the same white. The bolt is the one thing on the
+      # bar that distinguishes the two.
+      format-charging = " {capacity}%";
+      format-plugged = "{icon} {capacity}%";
       tooltip-format = "{timeTo}\n{power:0.1f}W";
     };
 
@@ -256,14 +268,23 @@ let
     # as the literal words "activated"/"deactivated", while {icon} is what
     # looks up format-icons. With {status} the map below is dead code and the
     # bar reads "deactivated", which says nothing about what the module is.
-    # Single letters rather than words: at one character the module no longer
-    # shifts the modules to its right when it toggles, and waybar.css carries
-    # the meaning -- C is orange while the lock is inhibited, I is white.
+    # A cup while something is holding the screen awake, a moon while it is
+    # free to lock. waybar.css carries the meaning in colour as before --
+    # the cup is orange, the moon white -- and these replace the letters C
+    # and I, which said the same thing less obviously.
+    #
+    # The letters were chosen partly so that toggling could not shift the
+    # modules to the right of this one. That still holds only if the two
+    # glyphs have the same advance, which is likely but not measured: the
+    # Nerd Font cut that fontconfig hands waybar is the proportional one, and
+    # Pango lays out by each glyph's own width rather than by a cell. If the
+    # clock is ever seen to twitch on Mod-nothing, give #idle_inhibitor a
+    # min-width in waybar.css and the question goes away.
     idle_inhibitor = {
       format = "{icon}";
       format-icons = {
-        activated = "C";
-        deactivated = "I";
+        activated = "";
+        deactivated = "";
       };
       # 10 min is swayidle's lock timeout below.
       tooltip-format-activated = "Automatic lock disabled";
@@ -634,11 +655,12 @@ in
   # other tools ~/.config/yazi is ignored. Edit this block instead.
   #
   # The preset theme draws Nerd Font glyphs, which are stripped out below.
-  # As with waybar and the snacks explorer, that is now a choice rather than
-  # a limit: the glyphs would in fact resolve, since terminal.nix installs
-  # nerd-fonts.jetbrains-mono and its fontconfig rule puts that family right
-  # behind JetBrains Mono. Plain text is kept because it is the style of the
-  # tmux status bar and the rest of the session. Hence:
+  # That is a choice, not a limit: the glyphs resolve fine, as the icons now
+  # on waybar show. yazi is kept textual anyway, and the dividing line is
+  # deliberate -- waybar is desktop chrome, while yazi runs in a terminal
+  # grid alongside tmux, weechat and micro, which are all text. The snacks
+  # explorer in nvim.lua is held to the same rule for the same reason.
+  # Hence:
   programs.yazi = {
     enable = true;
     settings.theme = {

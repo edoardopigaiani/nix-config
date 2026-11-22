@@ -84,12 +84,16 @@ map("t", "<M-l>", [[<C-\><C-n><C-w>l]], { desc = "Window right" })
 -- ------------------------------------------------------------------ snacks
 -- snacks.nvim is already here as claudecode.nvim's terminal; its picker also
 -- takes over vim.ui.select. File icons are off: there is no icon plugin, and
--- plain text is the style of the tmux line and the bar. It is a choice now
--- rather than the limit it was under the bitmap -- the fontconfig rule in
--- terminal.nix puts JetBrainsMono Nerd Font behind the terminal's family, so
--- the glyphs would resolve. The diagnostic and git markers are plain letters
--- to match: the diagnostics follow Neovim's own sign column (E/W/I/H), the
--- git ones `git status --short`.
+-- plain text is the style of the tmux line, weechat and micro -- everything
+-- sharing this terminal grid. waybar went to icons and this did not follow;
+-- that split is on purpose, chrome against terminal, and yazi in desktop.nix
+-- says the same thing from its side.
+--
+-- It is a choice rather than the limit it was under the bitmap: the
+-- fontconfig rule in terminal.nix puts JetBrainsMono Nerd Font behind the
+-- terminal's family, so the glyphs would resolve. The diagnostic and git
+-- markers are plain letters to match: the diagnostics follow Neovim's own
+-- sign column (E/W/I/H), the git ones `git status --short`.
 require("snacks").setup({
   picker = {
     enabled = true,
