@@ -73,6 +73,25 @@
       extraArgs = "--keep-since 14d --keep 5";
     };
   };
+  # `, <command>` runs a program without installing it: comma asks nix-locate
+  # which package provides a binary by that name, then runs it. The point is
+  # that mapping -- the command is rarely the package name (strings is in
+  # binutils, dig in dnsutils, lsusb in usbutils), and looking that up is the
+  # actual friction on this system. The package lands in the store with no gc
+  # root, so `nh clean` above sweeps it on its own and nothing accumulates.
+  #
+  # Which is also why it is here rather than in environment.systemPackages:
+  # one-off tools do not belong in that list, and keeping them out of it is
+  # what this buys.
+  #
+  # The module from the flake input brings two more things with it, both by
+  # mkDefault so they can be overridden: programs.nix-index, which also gives
+  # `nix-locate` for "which package has this file", and a replacement for
+  # programs.command-not-found -- nixpkgs' version reads a channel database
+  # this flake-only system does not have, so an unknown command said nothing
+  # useful before.
+  programs.nix-index-database.comma.enable = true;
+
   nix.settings.auto-optimise-store = true;
   nix.settings.experimental-features = [
     "nix-command"
