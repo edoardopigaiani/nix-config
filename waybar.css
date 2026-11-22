@@ -56,10 +56,11 @@
    * through font-hinting = "none" in the dconf block would have been global
    * to every GTK app, which is why it is not done there.
    *
-   * The state modules are icons: a battery that follows the charge across
-   * five glyphs, a bolt while it is actually charging, a clock, and a cup or
-   * a moon for the idle inhibitor (desktop.nix sets the formats). The
-   * workspace indices and the window title stay text, being text by nature.
+   * Two modules are icons: the battery, which follows the charge across five
+   * glyphs and shows a bolt while it is actually charging, and the idle
+   * inhibitor, a cup or a moon (desktop.nix sets the formats). Everything
+   * else is text -- the clock, the workspace indices, the window title --
+   * because a time and a number say themselves.
    *
    * None of those glyphs is in JetBrains Mono. They resolve because the
    * fontconfig rule in terminal.nix appends JetBrainsMono Nerd Font behind

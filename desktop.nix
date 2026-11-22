@@ -180,19 +180,24 @@ let
   # Nix would corrupt -- the same split terminal.nix makes between the foot
   # module and the files it links instead, nvim.lua and darkblue.micro.
   #
-  # The state modules draw Nerd Font glyphs, which resolve without any font
-  # being named here: the fontconfig rule in terminal.nix appends
-  # JetBrainsMono Nerd Font behind JetBrains Mono for anything that asks for
-  # the latter. Under the Tamzen bitmap this file was on before, which
-  # covered only ASCII and part of Latin-1, the same formats would have drawn
-  # tofu.
+  # Two modules draw Nerd Font glyphs and the rest is text. The battery gets
+  # one, because a charge level is what an icon says better than a word, and
+  # the idle inhibitor gets one, because its two states have no good short
+  # label. Everything else -- the clock, the workspace indices, the window
+  # title -- is text, which is the bar's default and not a limitation: the
+  # clock was briefly an icon plus the time and read worse than the time
+  # alone.
   #
-  # The two spaces between a glyph and its text are deliberate, not a typo to
-  # tidy away. waybar hands the whole format string to Pango as one label,
-  # and the proportional Nerd Font cut leaves almost no side bearing on the
-  # icons, so a single space reads as none. If two now looks too airy, the
-  # other direction is one space plus a thin space (U+2009) rather than going
-  # back to one.
+  # The glyphs resolve without any font being named here: the fontconfig rule
+  # in terminal.nix appends JetBrainsMono Nerd Font behind JetBrains Mono for
+  # anything that asks for the latter. Under the Tamzen bitmap this file used
+  # to be on, which covered only ASCII and part of Latin-1, they would have
+  # drawn tofu.
+  #
+  # The two spaces between the battery glyph and its percentage are
+  # deliberate, not a typo to tidy away. waybar hands the whole format string
+  # to Pango as one label, and the proportional Nerd Font cut leaves almost no
+  # side bearing on the icon, so a single space reads as none.
   #
   # No module here spawns anything on click, so none of them needs an absolute
   # store path: waybar runs as a systemd user service whose PATH does not
@@ -233,7 +238,7 @@ let
 
     # The time only, HH:MM; the date, YYYY-MM-DD, is in the tooltip.
     clock = {
-      format = "  {:%H:%M}";
+      format = "{:%H:%M}";
       tooltip-format = "{:%Y-%m-%d}";
     };
 
