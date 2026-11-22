@@ -166,6 +166,45 @@ window-rule {
     clip-to-geometry true
 }
 
+// Keep the vault out of a screen share. Cryptomator shows decrypted file
+// names and mount paths, and screen sharing is the one place that leaks
+// without anyone noticing -- niri paints the window out of the stream and
+// leaves it readable on the physical screen.
+//
+// "screencast" rather than "screen-capture": the stronger value also blocks
+// niri's own Print screenshots, which would get in the way of deliberately
+// photographing a bug in the vault.
+//
+// The pattern is a substring on purpose. match takes a regex (niri builds
+// these with RegexBuilder and tests them with is_match, so it is unanchored
+// by default) and the real app-id is
+// org.cryptomator.launcher.Cryptomator$MainApp -- a JavaFX id, with a $ that
+// would have to be escaped if this were anchored, and which looks nothing
+// like the org.cryptomator.Cryptomator of its .desktop file. Matching the
+// middle of it survives both problems.
+window-rule {
+    match app-id="cryptomator"
+    block-out-from "screencast"
+}
+
+// The three TUIs the control centre opens (Mod+S) float instead of tiling.
+// They are transient panels -- pick a network, pair a device, move a slider,
+// close -- and tiling them shoves the real work aside to do it, which is the
+// opposite of what a quick setting should feel like.
+//
+// These ids are exact rather than substrings because control-center.sh sets
+// them itself with foot's -a, so there is no guessing: a bare word goes
+// straight to the Wayland surface. That script also has to pass
+// `-o main.initial-window-mode=windowed`, because terminal.nix starts foot
+// maximized and a maximised floating window is just a window covering the
+// screen; the size it opens at is set there too.
+window-rule {
+    match app-id="^nmtui$"
+    match app-id="^bluetui$"
+    match app-id="^wiremix$"
+    open-floating true
+}
+
 // ------------------------------------------------------------- misc session
 // Ask clients to let the compositor draw decorations. Most GTK apps honour it
 // and lose their rounded CSD title bars, which both saves vertical space and

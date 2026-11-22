@@ -150,15 +150,34 @@ power_submenu() {
   esac
 }
 
+# The three TUIs open as floating panels, which niri.kdl arranges by matching
+# the app-ids given here with -a. Two flags make that work:
+#
+#   -o main.initial-window-mode=windowed  terminal.nix starts foot maximized,
+#     and a maximised floating window is just a window covering the screen.
+#     foot has no --windowed flag, so the config option is overridden instead.
+#   -W  the size, in characters. Without it a windowed foot opens at its
+#     default 80x24 regardless of what the TUI inside wants.
+#
+# Sizes are the smallest that do not make the tool fiddly: nmtui is a small
+# ncurses dialog, bluetui needs room for its device list, and wiremix is the
+# widest, being a mixer with a column per stream.
+panel() {
+  app=$1
+  size=$2
+  shift 2
+  exec foot -a "$app" -o main.initial-window-mode=windowed -W "$size" "$@"
+}
+
 # The launchers exec, replacing this script, so nothing is left waiting on
 # them. The toggles fall through and the loop redraws the menu with the new
 # state, which is the whole reason this is a loop.
 while :; do
   choice=$(main_menu | pick 'control> ') || exit 0
   case "$choice" in
-  wifi) exec foot -a nmtui nmtui ;;
-  bluetooth) exec foot -a bluetui bluetui ;;
-  audio) exec foot -a wiremix wiremix ;;
+  wifi) panel nmtui 80x24 nmtui ;;
+  bluetooth) panel bluetui 100x30 bluetui ;;
+  audio) panel wiremix 110x32 wiremix ;;
   night) toggle_night_light ;;
   dnd) makoctl mode -t do-not-disturb >/dev/null ;;
   shot) exec niri msg action screenshot ;;
