@@ -236,6 +236,13 @@ binds {
     // line, which is what fuzzel prints back.
     Mod+V hotkey-overlay-title="Clipboard history" { spawn "sh" "-c" "cliphist list | fuzzel --dmenu --with-nth 2 --prompt 'clip> ' | cliphist decode | wl-copy"; }
     Mod+B hotkey-overlay-title="Browser: Firefox" { spawn "firefox"; }
+    // The quick-settings menu: Wi-Fi, bluetooth, audio, night light,
+    // notifications, screenshot, lock and the power actions, each showing
+    // its current state. Mod+S is the key GNOME used for the same panel.
+    // The script is in desktop.nix, which also explains why it is a file of
+    // its own; it reaches PATH as "control-center" the same way fuzzel and
+    // swayosd-client do.
+    Mod+S hotkey-overlay-title="Control centre" { spawn "control-center"; }
     // These two run in a terminal and get an app-id of their own, through
     // foot's -a. The command is trailing arguments, with no flag in front of
     // it; foot does accept -e, but only as an xterm compatibility no-op, and

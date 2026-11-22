@@ -175,6 +175,40 @@ let
       --font-size 12
   '';
 
+  # ------------------------------------------------------- control centre
+  # The quick-settings menu, on Mod+S. The script is a real file for the
+  # reason the waybar block below states in reverse: shell is full of
+  # ${...}, the one syntax Nix would eat, so it stays out of this file the
+  # way niri.kdl and waybar.css do.
+  #
+  # runtimeInputs is what makes the script able to use bare command names:
+  # it builds a PATH containing exactly these and nothing else, so the script
+  # cannot quietly depend on something that happens to be in the user's
+  # profile. fuzzelWrapped rather than pkgs.fuzzel, so the menu is drawn at
+  # the same weight as the launcher on Mod+D.
+  #
+  # writeShellApplication also runs shellcheck at build time and sets
+  # errexit, nounset and pipefail, so a typo or an unquoted variable fails
+  # `nh os switch` rather than producing a menu that half works -- the same
+  # trade niriConfig makes with `niri validate`.
+  controlCentre = pkgs.writeShellApplication {
+    name = "control-center";
+    runtimeInputs = [
+      fuzzelWrapped
+      pkgs.networkmanager # nmcli, for the Wi-Fi state
+      pkgs.bluez # bluetoothctl
+      pkgs.wireplumber # wpctl, for the volume
+      pkgs.mako # makoctl
+      pkgs.niri # niri msg
+      pkgs.systemd # systemctl, loginctl
+      config.programs.foot.package # the wrapped foot, as niri.kdl spawns
+      pkgs.wiremix
+      pkgs.bluetui
+      pkgs.networkmanager # nmtui comes from here too
+    ];
+    text = builtins.readFile ./control-center.sh;
+  };
+
   # --------------------------------------------------------- waybar config
   # Nix rather than a real file, because unlike waybar.css this has no syntax
   # Nix would corrupt -- the same split terminal.nix makes between the foot
@@ -826,6 +860,7 @@ in
     swaybg # wallpaper, see the unit above
     swayosd # volume/brightness indicator; swayosd-client is what niri.kdl binds
     cliphist # clipboard history, Mod+V
+    controlCentre # the quick-settings menu, Mod+S
     xwayland-satellite # XWayland for Steam, see the unit above
     wl-clipboard # already in terminal.nix for tmux; listed as a session dep
 
