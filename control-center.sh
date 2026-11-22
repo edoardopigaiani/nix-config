@@ -1,5 +1,6 @@
 # Control centre for the niri session: the toggles and panels GNOME kept in
-# its quick settings menu, as a fuzzel list. Mod+S opens it (niri.kdl), the
+# its quick settings menu, plus screen recording, which GNOME had and niri
+# has no action for. As a fuzzel list. Mod+S opens it (niri.kdl), the
 # same key GNOME used.
 #
 # A real file rather than a string in desktop.nix, for the reason the waybar
@@ -84,6 +85,14 @@ night_light_state() {
   fi
 }
 
+recording_state() {
+  if pgrep -x wf-recorder >/dev/null; then
+    echo "recording"
+  else
+    echo "off"
+  fi
+}
+
 notifications_state() {
   case "$({ makoctl mode 2>/dev/null || true; })" in
   *do-not-disturb*) echo "silenced" ;;
@@ -107,6 +116,7 @@ main_menu() {
   row audio "Audio" "$(audio_state)"
   row night "Night light" "$(night_light_state)"
   row dnd "Notifications" "$(notifications_state)"
+  row rec "Screen recording" "$(recording_state)"
   row shot "Screenshot"
   row lock "Lock"
   row power "Power..."
@@ -180,6 +190,7 @@ while :; do
   audio) panel wiremix 110x32 wiremix ;;
   night) toggle_night_light ;;
   dnd) makoctl mode -t do-not-disturb >/dev/null ;;
+  rec) screen-record ;;
   shot) exec niri msg action screenshot ;;
   lock) exec loginctl lock-session ;;
   power) power_submenu ;;

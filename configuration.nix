@@ -223,7 +223,34 @@
   };
 
   # Install firefox.
-  programs.firefox.enable = true;
+  programs.firefox = {
+    enable = true;
+
+    # Turn AV1 off, which sounds backwards and is not. YouTube picks a codec
+    # from what the browser says it can play; Firefox decodes AV1 in software,
+    # so it advertises it, so YouTube sends AV1 and this laptop decodes it on
+    # four Zen+ threads. Meanwhile VP9 -- which the Vega 6 decodes in hardware
+    # -- goes unused.
+    #
+    # Measured rather than assumed: vainfo on this machine lists
+    # VAProfileVP9Profile0 and Profile2, H.264 and HEVC Main/Main10, and no
+    # AV1 profile at all. That is the silicon, not a missing driver: AV1
+    # decode on AMD starts with VCN 3, and this is a Raven with VCN 1. With
+    # AV1 refused, YouTube falls back to VP9 and the decode leaves the CPU.
+    #
+    # Check it took from YouTube's own "Stats for nerds": the Codecs field
+    # should read vp09, not av01. The trade is that a site serving AV1 with no
+    # fallback will not play, which is what the status below is for.
+    preferences = {
+      "media.av1.enabled" = false;
+    };
+
+    # The module locks preferences by default, which would make this one
+    # unchangeable from about:config. "user" sets it and leaves it adjustable,
+    # so a site that needs AV1 can be dealt with in the moment rather than
+    # with a rebuild.
+    preferencesStatus = "user";
+  };
 
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;

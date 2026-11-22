@@ -176,6 +176,22 @@ let
       --font-size 12
   '';
 
+  # ------------------------------------------------------ screen recording
+  # The toggle behind Mod+Print. Its own script rather than a line in
+  # niri.kdl because starting and stopping are the same keypress, which needs
+  # a branch, and because the GPU encoder flags want explaining.
+  screenRecord = pkgs.writeShellApplication {
+    name = "screen-record";
+    runtimeInputs = [
+      pkgs.wf-recorder
+      pkgs.libnotify # notify-send, for the start/stop/failed notifications
+      pkgs.procps # pkill and pgrep
+      pkgs.coreutils # date, mkdir
+      pkgs.util-linux # setsid, so the recorder outlives the script
+    ];
+    text = builtins.readFile ./screen-record.sh;
+  };
+
   # ------------------------------------------------------- control centre
   # The quick-settings menu, on Mod+S. The script is a real file for the
   # reason the waybar block below states in reverse: shell is full of
@@ -206,6 +222,8 @@ let
       pkgs.wiremix
       pkgs.bluetui
       pkgs.networkmanager # nmtui comes from here too
+      screenRecord # the Mod+Print toggle, also offered as a row
+      pkgs.procps # pgrep, to show whether a recording is running
     ];
     text = builtins.readFile ./control-center.sh;
   };
@@ -860,8 +878,10 @@ in
     wlsunset # night light
     swaybg # wallpaper, see the unit above
     swayosd # volume/brightness indicator; swayosd-client is what niri.kdl binds
+    wf-recorder # screen recording, Mod+Print; driven by the script above
     cliphist # clipboard history, Mod+V
     controlCentre # the quick-settings menu, Mod+S
+    screenRecord # screen recording toggle, Mod+Print
     xwayland-satellite # XWayland for Steam, see the unit above
     wl-clipboard # already in terminal.nix for tmux; listed as a session dep
 

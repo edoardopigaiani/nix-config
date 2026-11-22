@@ -403,6 +403,12 @@ binds {
     Print       { screenshot; }
     Ctrl+Print  { screenshot-screen; }
     Alt+Print   { screenshot-window; }
+    // Recording, which niri has no action for: the same key with Mod, so the
+    // video sits next to the three stills. One binding for both ends --
+    // press to start, press again to stop -- and a notification says which
+    // just happened. The script is in desktop.nix, where the GPU encoder
+    // flags are explained; files land in ~/Videos/Recordings.
+    Mod+Print   hotkey-overlay-title="Screen recording on/off" { spawn "screen-record"; }
 
     // ------------------------------------------------------------ hardware
     // allow-when-locked lets these keep working on the lock screen, which is
