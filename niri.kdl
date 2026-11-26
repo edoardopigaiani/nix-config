@@ -244,6 +244,18 @@ overview {
     backdrop-color "#111314"
 }
 
+// ----------------------------------------------------------------- gestures
+gestures {
+    // niri opens the overview when the pointer reaches the top left corner.
+    // With a trackpoint that is a misfire waiting to happen -- the pointer
+    // goes up there on its way to waybar's workspace indices, and the
+    // session zooms out instead. The deliberate ways in are untouched: Mod+O
+    // below, and a three-finger swipe up on the touchpad.
+    hot-corners {
+        off
+    }
+}
+
 // --------------------------------------------------------------- animations
 animations {
     // The X395 is a 4-thread laptop with an integrated GPU; the default
@@ -276,8 +288,9 @@ binds {
     Mod+V hotkey-overlay-title="Clipboard history" { spawn "sh" "-c" "cliphist list | fuzzel --dmenu --with-nth 2 --prompt 'clip> ' | cliphist decode | wl-copy"; }
     Mod+B hotkey-overlay-title="Browser: Firefox" { spawn "firefox"; }
     // The quick-settings menu: Wi-Fi, bluetooth, audio, night light,
-    // notifications, screenshot, lock and the power actions, each showing
-    // its current state. Mod+S is the key GNOME used for the same panel.
+    // notifications, screen recording, screenshots, the hotkey overlay, lock
+    // and the power actions, the toggles each showing their current state.
+    // Mod+S is the key GNOME used for the same panel.
     // The script is in desktop.nix, which also explains why it is a file of
     // its own; it reaches PATH as "control-center" the same way fuzzel and
     // swayosd-client do.
@@ -308,6 +321,15 @@ binds {
     // and automatic, while this is a plain switch. When wlsunset exits, niri
     // restores the default gamma; the unit still starts with every login.
     Mod+N hotkey-overlay-title="Night light on/off" { spawn "sh" "-c" "systemctl --user is-active --quiet wlsunset.service && systemctl --user stop wlsunset.service || systemctl --user start wlsunset.service"; }
+
+    // The notifications that have already gone. mako keeps what expired in a
+    // history buffer and `makoctl restore` brings the last one back, which is
+    // the nearest thing this session has to GNOME's notification drawer --
+    // without it a notification missed while in another workspace is simply
+    // lost. Dismiss-all is the keyboard reach for what mako.conf already
+    // binds to a middle click on a notification.
+    Mod+Shift+N hotkey-overlay-title="Restore the last notification" { spawn "makoctl" "restore"; }
+    Mod+Ctrl+N  hotkey-overlay-title="Dismiss all notifications" { spawn "makoctl" "dismiss" "--all"; }
 
     // ------------------------------------------------------------ windows
     Mod+Q repeat=false { close-window; }
@@ -409,6 +431,12 @@ binds {
     // just happened. The script is in desktop.nix, where the GPU encoder
     // flags are explained; files land in ~/Videos/Recordings.
     Mod+Print   hotkey-overlay-title="Screen recording on/off" { spawn "screen-record"; }
+    // Annotating what was just captured: arrows, boxes, text and blur, then
+    // back to the clipboard. No capture of its own -- all three screenshot
+    // actions above put the PNG on the clipboard, and that is what this
+    // reads, so the region, window and whole-screen variants are each
+    // annotatable the same way. The script is in desktop.nix.
+    Mod+Shift+Print hotkey-overlay-title="Annotate the last screenshot" { spawn "annotate-screenshot"; }
 
     // ------------------------------------------------------------ hardware
     // allow-when-locked lets these keep working on the lock screen, which is

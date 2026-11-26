@@ -192,6 +192,22 @@ let
     text = builtins.readFile ./screen-record.sh;
   };
 
+  # --------------------------------------------- screenshot annotation
+  # Mod+Shift+Print, and a control centre row. Reads the screenshot niri
+  # left on the clipboard and opens satty on it; the script says why it
+  # takes its configuration as flags rather than as a config file.
+  annotateScreenshot = pkgs.writeShellApplication {
+    name = "annotate-screenshot";
+    runtimeInputs = [
+      pkgs.satty
+      pkgs.wl-clipboard # wl-paste reads the capture, wl-copy takes it back
+      pkgs.libnotify # notify-send, for the empty-clipboard case
+      pkgs.gnugrep # the clipboard type check
+      pkgs.coreutils # mkdir
+    ];
+    text = builtins.readFile ./annotate-screenshot.sh;
+  };
+
   # ------------------------------------------------------- control centre
   # The quick-settings menu, on Mod+S. The script is a real file for the
   # reason the waybar block below states in reverse: shell is full of
@@ -223,6 +239,7 @@ let
       pkgs.bluetui
       pkgs.networkmanager # nmtui comes from here too
       screenRecord # the Mod+Print toggle, also offered as a row
+      annotateScreenshot # likewise, the Mod+Shift+Print one
       pkgs.procps # pgrep, to show whether a recording is running
     ];
     text = builtins.readFile ./control-center.sh;
@@ -880,8 +897,10 @@ in
     swayosd # volume/brightness indicator; swayosd-client is what niri.kdl binds
     wf-recorder # screen recording, Mod+Print; driven by the script above
     cliphist # clipboard history, Mod+V
+    satty # screenshot annotation; driven by the script above
     controlCentre # the quick-settings menu, Mod+S
     screenRecord # screen recording toggle, Mod+Print
+    annotateScreenshot # screenshot annotation, Mod+Shift+Print
     xwayland-satellite # XWayland for Steam, see the unit above
     wl-clipboard # already in terminal.nix for tmux; listed as a session dep
 

@@ -1,7 +1,8 @@
 # Control centre for the niri session: the toggles and panels GNOME kept in
-# its quick settings menu, plus screen recording, which GNOME had and niri
-# has no action for. As a fuzzel list. Mod+S opens it (niri.kdl), the
-# same key GNOME used.
+# its quick settings menu, plus screen recording and screenshot annotation,
+# which GNOME had and niri has no action for, and the hotkey overlay, which
+# nothing else in the session advertises. As a fuzzel list. Mod+S opens it
+# (niri.kdl), the same key GNOME used.
 #
 # A real file rather than a string in desktop.nix, for the reason the waybar
 # config states in reverse: a shell script is full of ${...}, which is
@@ -118,6 +119,8 @@ main_menu() {
   row dnd "Notifications" "$(notifications_state)"
   row rec "Screen recording" "$(recording_state)"
   row shot "Screenshot"
+  row annotate "Annotate screenshot"
+  row keys "Shortcuts"
   row lock "Lock"
   row power "Power..."
 }
@@ -192,6 +195,16 @@ while :; do
   dnd) makoctl mode -t do-not-disturb >/dev/null ;;
   rec) screen-record ;;
   shot) exec niri msg action screenshot ;;
+  # Annotation reads the screenshot off the clipboard rather than taking one
+  # (annotate-screenshot.sh), so reaching it from here is the slow path by
+  # design: shoot first with Print, then come back. It notifies and exits if
+  # the clipboard holds no image.
+  annotate) exec annotate-screenshot ;;
+  # niri's own list of every binding in niri.kdl, which is otherwise reachable
+  # only by knowing that Mod+F1 shows it -- the overlay is set to
+  # skip-at-startup, so nothing ever offers it. The one row here that answers
+  # a question instead of changing something.
+  keys) exec niri msg action show-hotkey-overlay ;;
   lock) exec loginctl lock-session ;;
   power) power_submenu ;;
   *) exit 0 ;;
