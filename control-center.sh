@@ -103,9 +103,16 @@ notifications_state() {
 
 # ---------------------------------------------------------------- menu
 
+# A row carrying state puts it in a second column, so the values line up
+# under each other rather than trailing each label. 16 is the width of the
+# longest label that has state, "Screen recording", and the two spaces are a
+# separate gutter rather than part of the field: at exactly 16 characters
+# %-16s pads with nothing, which glued that row's state to its label until
+# the gutter was pulled out of the field. A longer label now pushes its own
+# state right instead of touching it.
 row() {
   if [ "$#" -eq 3 ]; then
-    printf '%s\t%-16s%s\n' "$1" "$2" "$3"
+    printf '%s\t%-16s  %s\n' "$1" "$2" "$3"
   else
     printf '%s\t%s\n' "$1" "$2"
   fi
